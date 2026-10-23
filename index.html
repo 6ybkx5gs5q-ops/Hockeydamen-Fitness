@@ -1,0 +1,972 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex, nofollow">
+<meta name="theme-color" content="#1e3a8a">
+<title>Hockeydamen Fitness</title>
+<script src="chart.umd.min.js"></script>
+<script src="config.js"></script>
+<style>
+/* Mobile-first App: Kopfzeile + Tab-Leiste, Inhalte als Karten in einer Spalte, ab 900px mehrspaltig.
+   Übersicht = Team oben, darunter Auszeichnungen ("Spaßseite"); Ranking = Tabelle, Klick öffnet Spielerinnen-Dashboard. */
+:root {
+  --bg:#f3f5fa; --card:#ffffff; --ink:#0f172a; --muted:#5b6b82; --line:#e1e7f0;
+  --brand:#1e3a8a; --accent:#2563eb; --accent-soft:#e8efff; --ok:#047857; --ok-soft:#e3f6ee;
+  --warn:#b45309; --warn-soft:#fff4e0; --bad:#b91c1c; --bad-soft:#fde8e8;
+  --gold:#b7791f; --gold-soft:#fdf3dc; --silver-soft:#eef1f5; --bronze-soft:#f8ebe1;
+  --c-lauf:#2563eb; --c-int:#8b5cf6; --c-wo:#f59e0b; --c-ath:#10b981; --c-rad:#ef4444;
+  --h0:#eef2f8; --h1:#dbeafe; --h2:#93c5fd; --h3:#3b82f6; --h4:#1e3a8a; --h-fg:#ffffff;
+  --on-accent:#ffffff;
+  --font: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg:#0b1220; --card:#131c2e; --ink:#e6ebf4; --muted:#93a3ba; --line:#243049;
+  --brand:#0f1d40; --accent:#60a5fa; --accent-soft:#1a2a4a; --ok:#34d399; --ok-soft:#0f2e25;
+  --warn:#fbbf24; --warn-soft:#33270c; --bad:#f87171; --bad-soft:#3a1717;
+  --gold:#fbbf24; --gold-soft:#2f2611; --silver-soft:#1c2536; --bronze-soft:#2c1f18;
+  --h0:#18223a; --h1:#1e3a5f; --h2:#1d4ed8; --h3:#3b82f6; --h4:#93c5fd; --h-fg:#0b1220; --on-accent:#0b1220; color-scheme: dark; } }
+:root[data-theme="dark"] {
+  --bg:#0b1220; --card:#131c2e; --ink:#e6ebf4; --muted:#93a3ba; --line:#243049;
+  --brand:#0f1d40; --accent:#60a5fa; --accent-soft:#1a2a4a; --ok:#34d399; --ok-soft:#0f2e25;
+  --warn:#fbbf24; --warn-soft:#33270c; --bad:#f87171; --bad-soft:#3a1717;
+  --gold:#fbbf24; --gold-soft:#2f2611; --silver-soft:#1c2536; --bronze-soft:#2c1f18;
+  --h0:#18223a; --h1:#1e3a5f; --h2:#1d4ed8; --h3:#3b82f6; --h4:#93c5fd; --h-fg:#0b1220; --on-accent:#0b1220; color-scheme: dark; }
+* { box-sizing: border-box; }
+html, body { margin: 0; }
+body { background: var(--bg); color: var(--ink); font: 15px/1.45 var(--font); -webkit-text-size-adjust: 100%; }
+body.noscroll { overflow: hidden; }
+button, input, select, textarea { font: inherit; color: inherit; }
+[hidden] { display: none !important; }
+
+header.top { background: var(--brand); color: #fff; padding: calc(12px + env(safe-area-inset-top, 0px)) 16px 0; position: sticky; top: 0; z-index: 20; }
+.top-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; max-width: 1100px; margin: 0 auto; }
+.brand { font-weight: 800; font-size: 18px; letter-spacing: -.01em; }
+.brand small { display: block; font-weight: 500; font-size: 12px; opacity: .75; letter-spacing: 0; }
+.icon-btn { background: rgba(255,255,255,.14); border: 0; color: #fff; border-radius: 10px; padding: 7px 11px; cursor: pointer; font-size: 13px; }
+nav.tabs { display: flex; gap: 4px; overflow-x: auto; max-width: 1100px; margin: 10px auto 0; scrollbar-width: none; }
+nav.tabs::-webkit-scrollbar { display: none; }
+nav.tabs button { background: none; border: 0; color: rgba(255,255,255,.72); padding: 10px 12px 12px; font-weight: 600; cursor: pointer; white-space: nowrap; border-bottom: 3px solid transparent; }
+nav.tabs button[aria-selected="true"] { color: #fff; border-bottom-color: #fff; }
+
+main { max-width: 1100px; margin: 0 auto; padding: 16px 16px calc(32px + env(safe-area-inset-bottom, 0px)); display: grid; gap: 16px; }
+.view { display: grid; gap: 16px; }
+.cols { display: grid; gap: 16px; }
+@media (min-width: 900px) { .cols { grid-template-columns: 1fr 1fr; } .cols > * { min-width: 0; } }
+.card { background: var(--card); border: 1px solid var(--line); border-radius: 14px; padding: 16px; min-width: 0; }
+.card h2 { font-size: 17px; margin: 0 0 4px; text-wrap: balance; }
+.card .sub { color: var(--muted); font-size: 13px; margin: 0 0 12px; }
+.sec-title { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; margin: 6px 2px -4px; }
+.sec-title h2 { font-size: 20px; margin: 0; letter-spacing: -.01em; }
+.sec-title span { color: var(--muted); font-size: 13px; }
+.kpis { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; }
+@media (min-width: 700px) { .kpis { grid-template-columns: repeat(4, 1fr); } }
+.kpi { background: var(--card); border: 1px solid var(--line); border-radius: 14px; padding: 14px; }
+.kpi b { display: block; font-size: 26px; font-weight: 800; letter-spacing: -.02em; color: var(--accent); font-variant-numeric: tabular-nums; line-height: 1.1; }
+.kpi span { color: var(--muted); font-size: 13px; }
+
+/* Team-Karten */
+.team-all { background: linear-gradient(135deg, #1e3a8a, #2563eb 65%, #0d9488); color: #fff; border-radius: 18px; padding: 18px; display: grid; gap: 14px; }
+.team-all h2 { margin: 0; font-size: 20px; }
+.team-all .lead { opacity: .85; font-size: 13px; margin-top: 2px; }
+.team-all .stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+@media (min-width: 700px) { .team-all .stats { grid-template-columns: repeat(6, 1fr); } }
+.team-all .stats b { display: block; font-size: 26px; font-weight: 800; line-height: 1.1; font-variant-numeric: tabular-nums; }
+.team-all .stats span { font-size: 12px; opacity: .85; }
+.teams { display: grid; gap: 12px; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); }
+.team { background: var(--card); border: 1px solid var(--line); border-radius: 14px; padding: 14px 16px; display: grid; gap: 10px; position: relative; }
+.team .head { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.team .tn { font-size: 22px; font-weight: 800; color: var(--accent); }
+.team .lead-badge { font-size: 12px; font-weight: 700; color: var(--gold); background: var(--gold-soft); padding: 3px 9px; border-radius: 999px; }
+.team .tg { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+.team .tg b { display: block; font-size: 20px; font-weight: 800; font-variant-numeric: tabular-nums; }
+.team .tg span { font-size: 12px; color: var(--muted); }
+.bar { height: 8px; background: var(--h0); border-radius: 999px; overflow: hidden; }
+.bar > i { display: block; height: 100%; background: var(--accent); border-radius: 999px; }
+.info { background: var(--accent-soft); border-radius: 12px; padding: 12px 14px; font-size: 14px; }
+
+/* Auszeichnungen */
+.awards { display: grid; gap: 12px; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); }
+.award { background: var(--card); border: 1px solid var(--line); border-radius: 16px; padding: 14px 16px; display: grid; gap: 8px; }
+.award .top { display: flex; gap: 12px; align-items: center; }
+.award .emo { font-size: 34px; line-height: 1; width: 48px; height: 48px; display: grid; place-items: center; background: var(--gold-soft); border-radius: 14px; flex: none; }
+.award .tt { font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); }
+.award .win { font-size: 19px; font-weight: 800; line-height: 1.2; }
+.award .val { font-size: 13px; color: var(--muted); font-variant-numeric: tabular-nums; }
+.podium { display: grid; gap: 4px; font-size: 13px; }
+.podium button { all: unset; cursor: pointer; display: flex; justify-content: space-between; gap: 8px; padding: 5px 8px; border-radius: 8px; font-variant-numeric: tabular-nums; }
+.podium button:focus-visible { outline: 2px solid var(--accent); }
+.podium .r1 { background: var(--gold-soft); font-weight: 700; }
+.podium .r2 { background: var(--silver-soft); }
+.podium .r3 { background: var(--bronze-soft); }
+.award .desc { font-size: 12px; color: var(--muted); }
+button.linkname { all: unset; cursor: pointer; font-weight: inherit; }
+button.linkname:hover { text-decoration: underline; }
+button.linkname:focus-visible { outline: 2px solid var(--accent); border-radius: 4px; }
+
+/* Formular */
+.field { display: grid; gap: 5px; }
+.field label { font-size: 13px; font-weight: 600; color: var(--muted); }
+input, select, textarea { width: 100%; background: var(--bg); border: 1px solid var(--line); border-radius: 10px; padding: 11px 12px; font-size: 16px; }
+input:focus, select:focus, textarea:focus, button:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+.form { display: grid; gap: 14px; }
+.row3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+.row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+@media (max-width: 420px) { .row3 { grid-template-columns: 1fr 1fr; } }
+.seg { display: flex; flex-wrap: wrap; gap: 8px; }
+.seg button { border: 1px solid var(--line); background: var(--bg); border-radius: 999px; padding: 8px 14px; cursor: pointer; font-weight: 600; font-size: 14px; display: inline-flex; align-items: center; gap: 7px; }
+.seg button[aria-pressed="true"] { background: var(--accent); border-color: var(--accent); color: var(--on-accent); }
+.seg.small button { padding: 4px 10px; font-size: 13px; }
+.hint { font-size: 13px; color: var(--muted); }
+.preview { background: var(--accent-soft); border-radius: 10px; padding: 10px 12px; font-size: 14px; font-variant-numeric: tabular-nums; }
+.btn { background: var(--accent); color: var(--on-accent); border: 0; border-radius: 12px; padding: 13px 16px; font-weight: 700; font-size: 16px; cursor: pointer; width: 100%; }
+.btn:disabled { opacity: .55; cursor: wait; }
+.btn.secondary { background: var(--bg); color: var(--ink); border: 1px solid var(--line); }
+.btn.small { width: auto; padding: 7px 12px; font-size: 13px; border-radius: 9px; }
+.msg { border-radius: 10px; padding: 11px 13px; font-size: 14px; }
+.msg.ok { background: var(--ok-soft); color: var(--ok); }
+.msg.bad { background: var(--bad-soft); color: var(--bad); }
+.msg.warn { background: var(--warn-soft); color: var(--warn); }
+.msg .btn { margin-top: 8px; }
+
+/* Listen & Tabellen */
+.list { display: grid; }
+.item { display: flex; align-items: center; gap: 10px; padding: 10px 0; border-bottom: 1px solid var(--line); }
+.item:last-child { border-bottom: 0; }
+.emo-s { font-size: 20px; width: 28px; text-align: center; flex: none; }
+.item .main { flex: 1; min-width: 0; }
+.item .t { font-weight: 600; }
+.item .m { color: var(--muted); font-size: 13px; font-variant-numeric: tabular-nums; }
+.del { background: none; border: 1px solid var(--line); color: var(--bad); border-radius: 8px; padding: 5px 9px; font-size: 12px; cursor: pointer; flex: none; }
+.del.confirm { background: var(--bad); color: #fff; border-color: var(--bad); }
+.scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+table { border-collapse: collapse; width: 100%; font-size: 14px; font-variant-numeric: tabular-nums; }
+th, td { padding: 9px 7px; text-align: left; border-bottom: 1px solid var(--line); white-space: nowrap; }
+th { font-size: 11px; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); }
+th.sort { cursor: pointer; user-select: none; }
+th.sort.on { color: var(--accent); }
+td.num, th.num { text-align: right; }
+td.sorted { font-weight: 800; }
+tr.zero td { color: var(--muted); }
+tr.me td { background: var(--accent-soft); }
+tr.click { cursor: pointer; }
+tr.click:hover td { background: var(--h0); }
+td.nmcell { position: sticky; left: 0; background: var(--card); }
+tr.me td.nmcell { background: var(--accent-soft); }
+.pill { display: inline-block; font-size: 11px; font-weight: 700; padding: 2px 7px; border-radius: 999px; background: var(--bg); color: var(--muted); border: 1px solid var(--line); margin-left: 4px; }
+.heat table { font-size: 12px; }
+.heat th, .heat td { text-align: center; padding: 4px 3px; border: 2px solid var(--card); min-width: 26px; }
+.heat td.nm { text-align: left; font-weight: 600; padding-right: 8px; position: sticky; left: 0; background: var(--card); }
+.h0 { background: var(--h0); } .h1 { background: var(--h1); } .h2 { background: var(--h2); }
+.h3 { background: var(--h3); color: var(--h-fg); } .h4 { background: var(--h4); color: var(--h-fg); }
+.a1 { background: var(--c-ath); color: #fff; font-weight: 800; border-radius: 5px; }
+.chart { position: relative; height: 260px; }
+.chart.tall { height: 320px; }
+.legend { display: flex; flex-wrap: wrap; gap: 12px; font-size: 13px; color: var(--muted); margin-bottom: 8px; }
+.legend i { display: inline-block; width: 10px; height: 10px; border-radius: 3px; margin-right: 5px; vertical-align: -1px; }
+.checks { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 6px; }
+.checks label { display: flex; align-items: center; gap: 8px; padding: 9px 10px; border: 1px solid var(--line); border-radius: 10px; cursor: pointer; background: var(--bg); font-size: 14px; }
+.checks input { width: 18px; height: 18px; margin: 0; flex: none; }
+.checks label:has(input:checked) { border-color: var(--c-ath); background: var(--ok-soft); }
+.trow { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 8px 0; border-bottom: 1px solid var(--line); flex-wrap: wrap; }
+.trow.changed { background: var(--warn-soft); margin: 0 -8px; padding: 8px; border-radius: 8px; }
+.typebars { display: grid; gap: 8px; }
+.typebars .tb { display: grid; grid-template-columns: 130px 1fr 34px; gap: 8px; align-items: center; font-size: 13px; }
+.typebars .tb b { text-align: right; font-variant-numeric: tabular-nums; }
+
+/* Spielerinnen-Dashboard (Overlay) */
+.sheet-bg { position: fixed; inset: 0; background: rgba(8, 12, 24, .55); z-index: 40; display: flex; align-items: flex-end; justify-content: center; }
+@media (min-width: 760px) { .sheet-bg { align-items: center; padding: 24px; } }
+.sheet { background: var(--bg); width: 100%; max-width: 820px; max-height: 92vh; overflow-y: auto; border-radius: 20px 20px 0 0; padding: 0 16px calc(20px + env(safe-area-inset-bottom, 0px)); display: grid; gap: 14px; }
+@media (min-width: 760px) { .sheet { border-radius: 20px; } }
+.sheet-head { position: sticky; top: 0; background: var(--bg); padding: 16px 0 10px; display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; z-index: 2; border-bottom: 1px solid var(--line); }
+.sheet-head h2 { margin: 0; font-size: 22px; }
+.sheet-head .sub { color: var(--muted); font-size: 13px; margin-top: 2px; }
+.close { background: var(--card); border: 1px solid var(--line); border-radius: 10px; padding: 7px 12px; cursor: pointer; font-weight: 700; flex: none; }
+.badges { display: flex; flex-wrap: wrap; gap: 8px; }
+.badge { background: var(--gold-soft); border-radius: 999px; padding: 6px 12px; font-size: 13px; font-weight: 700; }
+.badge.r2 { background: var(--silver-soft); } .badge.r3 { background: var(--bronze-soft); }
+
+/* Code-Eingabe */
+.gate { position: fixed; inset: 0; background: var(--brand); display: flex; align-items: center; justify-content: center; padding: 16px; z-index: 50; }
+.gate .card { width: 100%; max-width: 360px; display: grid; gap: 12px; text-align: center; }
+.gate h1 { margin: 0; font-size: 22px; }
+.toast { position: fixed; left: 50%; transform: translateX(-50%); bottom: calc(20px + env(safe-area-inset-bottom, 0px)); background: var(--ink); color: var(--bg); padding: 11px 16px; border-radius: 12px; font-weight: 600; z-index: 60; max-width: calc(100% - 32px); }
+.loading { color: var(--muted); text-align: center; padding: 40px 0; }
+footer { color: var(--muted); font-size: 12px; text-align: center; display: grid; gap: 6px; }
+footer button { background: none; border: 0; color: var(--accent); cursor: pointer; font-size: 12px; text-decoration: underline; }
+@media (prefers-reduced-motion: reduce) { * { animation: none !important; transition: none !important; } }
+</style>
+</head>
+<body>
+
+<div class="gate" id="gate" hidden>
+  <form class="card" id="gateForm">
+    <h1>Hockeydamen Fitness</h1>
+    <div class="hint">Bitte den Team-Code aus der WhatsApp-Gruppe eingeben.</div>
+    <input id="gateCode" type="password" autocomplete="current-password" placeholder="Team-Code" required>
+    <button class="btn" id="gateBtn" type="submit">Weiter</button>
+    <div class="msg bad" id="gateErr" hidden></div>
+  </form>
+</div>
+
+<header class="top">
+  <div class="top-row">
+    <div class="brand">Hockeydamen Fitness<small id="stand">Lade …</small></div>
+    <button class="icon-btn" id="reloadBtn" type="button" aria-label="Daten neu laden">↻ Aktualisieren</button>
+  </div>
+  <nav class="tabs" role="tablist" id="tabs">
+    <button role="tab" data-view="eintragen" aria-selected="true">✍️ Eintragen</button>
+    <button role="tab" data-view="uebersicht" aria-selected="false">🏆 Übersicht</button>
+    <button role="tab" data-view="ranking" aria-selected="false">📋 Ranking</button>
+    <button role="tab" data-view="trainer" aria-selected="false" id="trainerTab">🧢 Trainer</button>
+  </nav>
+</header>
+
+<main>
+  <div class="loading" id="loading">Lade Daten …</div>
+
+  <!-- EINTRAGEN -->
+  <section class="view" id="v-eintragen" hidden>
+    <div class="cols">
+      <div class="card">
+        <h2>Einheit eintragen</h2>
+        <p class="sub">Zwei von drei Werten reichen, der dritte wird berechnet.</p>
+        <form class="form" id="addForm" novalidate>
+          <div class="row2">
+            <div class="field"><label for="fName">Wer?</label><select id="fName" required></select></div>
+            <div class="field"><label for="fDatum">Datum</label><input id="fDatum" type="date" required></div>
+          </div>
+          <div class="field"><label>Was?</label><div class="seg" id="fAktion"></div></div>
+
+          <div id="grpDist" class="row3">
+            <div class="field"><label for="fDist">Distanz (km)</label><input id="fDist" inputmode="decimal" placeholder="5,2"></div>
+            <div class="field" id="grpPace"><label for="fPace">Pace (min/km)</label><input id="fPace" inputmode="numeric" placeholder="6:10"></div>
+            <div class="field" id="grpKmh" hidden><label for="fKmh">Ø km/h</label><input id="fKmh" inputmode="decimal" placeholder="22"></div>
+            <div class="field"><label for="fDauer">Dauer</label><input id="fDauer" inputmode="numeric" placeholder="32:05"></div>
+          </div>
+          <div id="grpInt" hidden>
+            <div class="row3">
+              <div class="field"><label for="fIntKm">km gesamt</label><input id="fIntKm" inputmode="decimal" placeholder="3,2"></div>
+              <div class="field"><label for="fWdh">oder Wdh.</label><input id="fWdh" inputmode="numeric" placeholder="8"></div>
+              <div class="field"><label for="fMeter">× Meter</label><input id="fMeter" inputmode="numeric" placeholder="400"></div>
+            </div>
+            <div class="hint" style="margin-top:6px">Bei Intervallen zählt nur die Distanz, keine Pace.</div>
+          </div>
+          <div class="hint" id="grpNone" hidden></div>
+
+          <div class="preview" id="preview" hidden></div>
+          <div class="field"><label for="fNotiz">Notiz (optional)</label><input id="fNotiz" maxlength="200" placeholder="z. B. Bergauflauf"></div>
+          <div class="msg" id="addMsg" hidden></div>
+          <button class="btn" id="addBtn" type="submit">Speichern</button>
+        </form>
+      </div>
+      <div class="card">
+        <h2>Meine letzten Einträge</h2>
+        <p class="sub">Einträge von diesem Gerät. Falsch eingetragen? Hier löschen und neu eintragen.</p>
+        <div class="list" id="mineList"></div>
+        <button type="button" class="btn secondary" id="myDashBtn" style="margin-top:12px" hidden>📊 Mein Dashboard öffnen</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ÜBERSICHT -->
+  <section class="view" id="v-uebersicht" hidden>
+    <div class="team-all" id="teamAll"></div>
+    <div id="teamInfo"></div>
+    <div class="teams" id="teamCards"></div>
+
+    <div class="sec-title"><h2>🏆 Auszeichnungen</h2><span id="awardsSub"></span></div>
+    <div class="awards" id="awards"></div>
+
+    <div class="cols">
+      <div class="card">
+        <h2>📈 So lief's die letzten Wochen</h2>
+        <p class="sub">Einheiten pro Woche, alle zusammen</p>
+        <div class="legend" id="legendWeek"></div>
+        <div class="chart"><canvas id="cWeek"></canvas></div>
+      </div>
+      <div class="card"><h2>🆕 Zuletzt eingetragen</h2><div class="list" id="feed"></div></div>
+    </div>
+  </section>
+
+  <!-- RANKING -->
+  <section class="view" id="v-ranking" hidden>
+    <div class="card">
+      <h2>Alle Werte im Überblick</h2>
+      <p class="sub">Auf eine Spalte tippen zum Sortieren, auf einen Namen für das persönliche Dashboard.</p>
+      <div class="seg small" id="rankTeam" style="margin:0 0 12px"></div>
+      <div class="scroll"><table id="rankTable"></table></div>
+    </div>
+  </section>
+
+  <!-- TRAINER -->
+  <section class="view" id="v-trainer" hidden>
+    <form class="card form" id="trLogin" hidden>
+      <h2>🔑 Trainer-Login</h2>
+      <p class="sub" style="margin:0">Dieser Bereich ist nur für den Trainer. Mit dem Trainer-Code anmelden.</p>
+      <input id="trCode" type="password" autocomplete="current-password" placeholder="Trainer-Code">
+      <div class="msg bad" id="trErr" hidden></div>
+      <button class="btn" id="trBtn" type="submit">Als Trainer anmelden</button>
+    </form>
+    <div class="view" id="trContent">
+    <div class="card">
+      <h2>Athletiktraining erfassen</h2>
+      <p class="sub">Anwesende ankreuzen. Bereits eingetragene werden übersprungen.</p>
+      <form class="form" id="athForm">
+        <div class="row2">
+          <div class="field"><label for="athDatum">Datum</label><input id="athDatum" type="date" required></div>
+          <div class="field"><label>&nbsp;</label><button type="button" class="btn secondary" id="athNone">Auswahl leeren</button></div>
+        </div>
+        <div class="checks" id="athChecks"></div>
+        <div class="msg" id="athMsg" hidden></div>
+        <button class="btn" id="athBtn" type="submit">Teilnahmen speichern</button>
+      </form>
+    </div>
+    <div class="card">
+      <h2>Kader verwalten</h2>
+      <p class="sub">Teams antippen (mehrere möglich) und speichern – Team-Karten und Filter entstehen automatisch. „Entfernen“ nimmt eine Spielerin aus Kader und Ranking; ihre bisherigen Einheiten zählen weiter im Team-Gesamt.</p>
+      <div id="teamEditor"></div>
+      <div class="msg" id="teamMsg" hidden></div>
+      <button class="btn" id="teamSave" type="button" style="margin-top:12px">Teams speichern</button>
+    </div>
+    <div class="card">
+      <h2>Spielerin hinzufügen</h2>
+      <p class="sub">Erscheint sofort in allen Listen und im Ranking. Team kann später zugeordnet werden.</p>
+      <form class="form" id="playerForm" novalidate>
+        <div class="field"><label for="plName">Vor- und Nachname</label><input id="plName" maxlength="60" autocomplete="off" placeholder="z. B. Marie Schulte"></div>
+        <div class="field"><label>Team (optional)</label><div class="seg small" id="plTeams"></div></div>
+        <div class="msg" id="plMsg" hidden></div>
+        <button class="btn" id="plBtn" type="submit">Spielerin hinzufügen</button>
+      </form>
+      <div class="hint" id="plCount" style="margin-top:10px"></div>
+    </div>
+    <div class="card">
+      <h2>Athletik-Teilnahme</h2>
+      <p class="sub" id="athSub"></p>
+      <div class="chart"><canvas id="cAth"></canvas></div>
+      <div class="scroll heat" style="margin-top:12px"><table id="athTable"></table></div>
+    </div>
+    <div class="card">
+      <h2>Aktivität pro Woche</h2>
+      <p class="sub">Einheiten je Spielerin und Kalenderwoche. Rechts: aktive Wochen.</p>
+      <div class="scroll heat"><table id="actTable"></table></div>
+    </div>
+    <div class="card">
+      <h2>Alle Einträge</h2>
+      <p class="sub">Als Trainer kannst du jeden Eintrag löschen. Korrekturen gehen auch direkt im Google Sheet.</p>
+      <div class="row2" style="margin-bottom:10px">
+        <div class="field"><label for="tFilterName">Spielerin</label><select id="tFilterName"></select></div>
+        <div class="field"><label for="tFilterAkt">Art</label><select id="tFilterAkt"></select></div>
+      </div>
+      <div class="list" id="tList"></div>
+    </div>
+    </div>
+  </section>
+
+  <footer id="foot" hidden>
+    <div id="footInfo"></div>
+    <div><button type="button" id="themeBtn">Hell/Dunkel</button> · <button type="button" id="logoutBtn">Code ändern</button></div>
+  </footer>
+</main>
+
+<div class="sheet-bg" id="sheetBg" hidden>
+  <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="pTitle">
+    <div class="sheet-head">
+      <div><h2 id="pTitle"></h2><div class="sub" id="pSub"></div></div>
+      <button type="button" class="close" id="pClose">✕ Schließen</button>
+    </div>
+    <div class="badges" id="pBadges"></div>
+    <div class="kpis" id="pKpis"></div>
+    <div class="cols">
+      <div class="card"><h2>⏱️ Pace-Verlauf</h2><p class="sub">Ausdauerläufe ab 2 km, auf 5 km normiert. Weiter oben = schneller.</p><div class="chart"><canvas id="cPPace"></canvas></div></div>
+      <div class="card"><h2>🧩 Einheiten nach Art</h2><div class="typebars" id="pTypes"></div>
+        <h2 style="margin-top:16px">🥇 Beste Läufe</h2><div class="scroll"><table id="pBest"></table></div></div>
+    </div>
+    <div class="card"><h2>📅 Alle Einheiten</h2><div class="list" id="pList"></div></div>
+  </div>
+</div>
+
+<script>
+(function () {
+'use strict';
+var API = (window.APP_CONFIG || {}).API_URL || '';
+var AKT = ['Ausdauerlauf', 'Intervalle', 'Workout', 'Radfahren', 'Athletiktraining'];
+var EMO = { Ausdauerlauf: '🏃‍♀️', Intervalle: '🔁', Workout: '🏋️‍♀️', Athletiktraining: '💪', Radfahren: '🚴‍♀️' };
+var COLVAR = { Ausdauerlauf: '--c-lauf', Intervalle: '--c-int', Workout: '--c-wo', Athletiktraining: '--c-ath', Radfahren: '--c-rad' };
+var TEAMS = ['D2', 'D3', 'D4'];
+var NICK = { 'Anna Kretz': 'Anni', 'Antonia Gedwien': 'Toni' };
+var S = { code: null, role: null, roster: [], entries: [], view: 'uebersicht', aktion: 'Ausdauerlauf', rankTeam: '', sort: 'total', charts: {}, teamDraft: {}, newTeams: {} };
+
+// ---------- Helfer ----------
+var $ = function (id) { return document.getElementById(id); };
+function store(k, v) { try { if (v === undefined) return localStorage.getItem(k); if (v === null) localStorage.removeItem(k); else localStorage.setItem(k, v); } catch (e) { return null; } }
+function css(n) { return getComputedStyle(document.documentElement).getPropertyValue(n).trim(); }
+function col(a) { return css(COLVAR[a]); }
+function esc(s) { return String(s == null ? '' : s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
+function num(v) { if (v == null || v === '') return null; var n = parseFloat(String(v).trim().replace(',', '.')); return isFinite(n) ? n : null; }
+function zeit(v) {
+  if (v == null) return null;
+  var s = String(v).trim().toLowerCase().replace(/min|std|h|\s/g, '');
+  if (!s) return null;
+  s = s.replace(',', ':').replace('.', ':');
+  var t = s.split(':').map(function (x) { return parseInt(x, 10); });
+  if (t.some(function (x) { return !isFinite(x) || x < 0; })) return null;
+  if (t.length === 1) return t[0];
+  if (t.length === 2) return t[1] < 60 ? t[0] + t[1] / 60 : null;
+  if (t.length === 3) return (t[1] < 60 && t[2] < 60) ? t[0] * 60 + t[1] + t[2] / 60 : null;
+  return null;
+}
+function mmss(m) { if (m == null) return '–'; var s = Math.round(m * 60); return Math.floor(s / 60) + ':' + ('0' + (s % 60)).slice(-2); }
+function dauerFmt(m) { if (m == null) return '–'; if (m >= 60) { var s = Math.round(m * 60); return Math.floor(s / 3600) + ':' + ('0' + Math.floor(s % 3600 / 60)).slice(-2) + ':' + ('0' + s % 60).slice(-2) + ' h'; } return mmss(m) + ' min'; }
+function de(x, d) { return (d == null ? String(x) : Number(x).toFixed(d)).replace('.', ','); }
+function km1(x) { return de((Math.round(x * 10) / 10).toFixed(1)); }
+function norm(d, p) { var t = d * p * Math.pow(5 / d, 1.06); return t / 5; }
+function fdate(iso) { var p = iso.split('-'); return +p[2] + '.' + +p[1] + '.'; }
+function today() { var d = new Date(); d.setMinutes(d.getMinutes() - d.getTimezoneOffset()); return d.toISOString().slice(0, 10); }
+function monday(iso) { var d = new Date(iso + 'T12:00:00Z'); var wd = (d.getUTCDay() + 6) % 7; d.setUTCDate(d.getUTCDate() - wd); return d.toISOString().slice(0, 10); }
+function kwNum(iso) { var d = new Date(iso + 'T12:00:00Z'); d.setUTCDate(d.getUTCDate() + 3 - (d.getUTCDay() + 6) % 7); var y = new Date(Date.UTC(d.getUTCFullYear(), 0, 4)); return 1 + Math.round(((d - y) / 86400000 - 3 + (y.getUTCDay() + 6) % 7) / 7); }
+function teamsOf(t) { var m = String(t || '').match(/D[1-4]/g) || []; return TEAMS.filter(function (x) { return m.indexOf(x) >= 0; }); }
+function teamStr(arr) { return TEAMS.filter(function (x) { return arr.indexOf(x) >= 0; }).join('+'); }
+function teamPills(t) { return teamsOf(t).map(function (x) { return '<span class="pill">' + x + '</span>'; }).join(''); }
+var DN = {};
+function buildNames() {
+  DN = {};
+  var base = function (n) { if (NICK[n]) return NICK[n]; var p = n.replace(/\s*\([^)]*\)/, '').split(/\s+/); return p.length < 2 ? p[0] : p[0] + ' ' + p[p.length - 1][0] + '.'; };
+  var all = {}; S.roster.forEach(function (r) { all[r.name] = 1; }); S.entries.forEach(function (e) { all[e.name] = 1; });
+  var cnt = {}; Object.keys(all).forEach(function (n) { var b = base(n); cnt[b] = (cnt[b] || 0) + 1; });
+  Object.keys(all).forEach(function (n) { var b = base(n); DN[n] = cnt[b] > 1 ? n : b; });
+}
+function dn(n) { return DN[n] || n; }
+function nameBtn(n) { return '<button type="button" class="linkname" data-player="' + esc(n) + '">' + esc(dn(n)) + '</button>'; }
+function isRunlike(e) { return e.aktion === 'Ausdauerlauf' || e.aktion === 'Intervalle'; }
+function paced(e) { return e.aktion === 'Ausdauerlauf' && e.pace_min_km && e.distanz_km >= 2 && !/alpinlauf|unvollst/i.test(e.hinweis || ''); }
+function toast(t) { var el = document.createElement('div'); el.className = 'toast'; el.textContent = t; document.body.appendChild(el); setTimeout(function () { el.remove(); }, 2600); }
+function msg(el, cls, html) { el.className = 'msg ' + cls; el.innerHTML = html; el.hidden = false; }
+function describe(e) {
+  var p = [];
+  if (e.distanz_km != null) p.push(de(e.distanz_km) + ' km');
+  if (e.aktion === 'Ausdauerlauf' && e.pace_min_km) p.push(mmss(e.pace_min_km) + ' min/km');
+  if (e.aktion === 'Radfahren' && e.pace_min_km) p.push(de(60 / e.pace_min_km, 1) + ' km/h');
+  if (e.dauer_min && e.aktion !== 'Intervalle') p.push(dauerFmt(e.dauer_min));
+  return p.join(' · ');
+}
+
+// ---------- API ----------
+function api(action, payload) {
+  var body = Object.assign({ action: action, code: S.code }, payload || {});
+  return fetch(API, { method: 'POST', body: JSON.stringify(body) })
+    .then(function (r) { return r.json(); })
+    .catch(function () { return { ok: false, error: 'Keine Verbindung zum Server. Internet prüfen und nochmal versuchen.' }; });
+}
+function load(silent) {
+  if (!silent) $('loading').hidden = false;
+  return api('data').then(function (r) {
+    $('loading').hidden = true;
+    if (!r.ok) {
+      if (r.auth === false) { store('hd_code', null); showGate('Der gespeicherte Code ist nicht mehr gültig.'); }
+      else toast(r.error || 'Fehler beim Laden');
+      return false;
+    }
+    S.role = r.role; S.roster = r.roster; S.entries = r.entries;
+    S.entries.sort(function (a, b) { return a.datum < b.datum ? -1 : a.datum > b.datum ? 1 : (a.erstellt < b.erstellt ? -1 : 1); });
+    buildNames();
+    $('stand').textContent = S.roster.length + ' Spielerinnen · ' + S.entries.length + ' Einheiten' + (S.role === 'trainer' ? ' · Trainer' : '');
+    $('foot').hidden = false;
+    $('footInfo').textContent = 'Stand ' + new Date(r.stand).toLocaleString('de-DE', { dateStyle: 'short', timeStyle: 'short' });
+    initFormOnce(); render();
+    return true;
+  });
+}
+
+// ---------- Gate / Kopf ----------
+function showGate(err) {
+  $('gate').hidden = false; $('gateErr').hidden = !err; if (err) $('gateErr').textContent = err;
+  setTimeout(function () { $('gateCode').focus(); }, 50);
+}
+$('gateForm').addEventListener('submit', function (ev) {
+  ev.preventDefault();
+  S.code = $('gateCode').value.trim(); $('gateBtn').disabled = true;
+  api('data').then(function (r) {
+    $('gateBtn').disabled = false;
+    if (!r.ok) { $('gateErr').hidden = false; $('gateErr').textContent = r.auth === false ? 'Code stimmt nicht.' : (r.error || 'Fehler'); return; }
+    store('hd_code', S.code); $('gate').hidden = true; load();
+  });
+});
+$('trLogin').addEventListener('submit', function (ev) {
+  ev.preventDefault();
+  var c = $('trCode').value.trim(); if (!c) return;
+  $('trBtn').disabled = true;
+  var old = S.code; S.code = c;
+  api('data').then(function (r) {
+    $('trBtn').disabled = false;
+    if (!r.ok || r.role !== 'trainer') { S.code = old; $('trErr').hidden = false; $('trErr').textContent = 'Das ist nicht der Trainer-Code.'; return; }
+    store('hd_code', c); $('trErr').hidden = true; $('trCode').value = ''; S.view = 'trainer'; load(true); toast('Als Trainer angemeldet');
+  });
+});
+$('logoutBtn').addEventListener('click', function () { store('hd_code', null); S.code = null; $('gateCode').value = ''; showGate(); });
+$('reloadBtn').addEventListener('click', function () { load(true).then(function (ok) { if (ok) toast('Aktualisiert'); }); });
+$('themeBtn').addEventListener('click', function () {
+  var r = document.documentElement, dark = r.dataset.theme ? r.dataset.theme === 'dark' : matchMedia('(prefers-color-scheme: dark)').matches;
+  r.dataset.theme = dark ? 'light' : 'dark'; store('hd_theme', r.dataset.theme); render();
+});
+(function () { var t = store('hd_theme'); if (t) document.documentElement.dataset.theme = t; })();
+$('tabs').addEventListener('click', function (ev) {
+  var b = ev.target.closest('button[data-view]'); if (!b) return;
+  S.view = b.dataset.view; store('hd_view', S.view); render(); window.scrollTo(0, 0);
+});
+// Klick auf einen Namen irgendwo → persönliches Dashboard
+document.addEventListener('click', function (ev) {
+  var b = ev.target.closest('[data-player]'); if (b) { ev.preventDefault(); openPlayer(b.dataset.player); }
+});
+
+function render() {
+  if (['eintragen', 'uebersicht', 'ranking', 'trainer'].indexOf(S.view) < 0) S.view = 'uebersicht';
+  Array.prototype.forEach.call($('tabs').children, function (b) { b.setAttribute('aria-selected', String(b.dataset.view === S.view)); });
+  ['eintragen', 'uebersicht', 'ranking', 'trainer'].forEach(function (v) { $('v-' + v).hidden = v !== S.view; });
+  Object.keys(S.charts).forEach(function (k) { if (k !== 'cPPace') { S.charts[k].destroy(); delete S.charts[k]; } });
+  if (window.Chart) { Chart.defaults.color = css('--muted'); Chart.defaults.borderColor = css('--line'); Chart.defaults.font.family = css('--font'); }
+  ({ eintragen: rEintragen, uebersicht: rUebersicht, ranking: rRanking, trainer: rTrainer })[S.view]();
+  if (!$('sheetBg').hidden && S.openName) openPlayer(S.openName);
+}
+
+// ---------- Auswertung (gemeinsam) ----------
+function weeksRange(from, to) {
+  var out = [], d = new Date(monday(from) + 'T12:00:00Z'), end = new Date(monday(to) + 'T12:00:00Z');
+  while (d <= end) { out.push(d.toISOString().slice(0, 10)); d.setUTCDate(d.getUTCDate() + 7); }
+  return out;
+}
+function personStats(name) {
+  var es = S.entries.filter(function (e) { return e.name === name; });
+  var s = { name: name, total: es.length, km: 0, rad: 0, mins: 0, akt: {}, weeks: {}, entries: es, longest: null, thisWeek: 0 };
+  var tw = monday(today());
+  AKT.forEach(function (a) { s.akt[a] = 0; });
+  es.forEach(function (e) {
+    s.akt[e.aktion]++; s.mins += e.dauer_min || 0; s.weeks[monday(e.datum)] = 1;
+    if (isRunlike(e)) s.km += e.distanz_km || 0;
+    if (e.aktion === 'Radfahren') s.rad += e.distanz_km || 0;
+    if (e.aktion === 'Ausdauerlauf' && e.distanz_km && (!s.longest || e.distanz_km > s.longest.distanz_km)) s.longest = e;
+    if (monday(e.datum) === tw) s.thisWeek++;
+  });
+  s.nweeks = Object.keys(s.weeks).length;
+  var p = es.filter(paced);
+  s.nPaced = p.length;
+  s.best = p.length ? Math.min.apply(null, p.map(function (e) { return norm(e.distanz_km, e.pace_min_km); })) : null;
+  s.improve = null;
+  if (p.length >= 4) {
+    var n = p.map(function (e) { return norm(e.distanz_km, e.pace_min_km); });
+    s.improve = ((n[0] + n[1]) / 2 - (n[n.length - 1] + n[n.length - 2]) / 2) * 60; // Sekunden/km schneller
+  }
+  return s;
+}
+function allStats() { return S.roster.map(function (r) { var s = personStats(r.name); s.team = r.team; return s; }); }
+
+// Auszeichnungen: jede liefert Wert pro Spielerin; Top 3 mit Wert > 0 (bzw. vorhanden)
+var AWARDS = [
+  { e: '👑', t: 'Spitzenreiterin', d: 'Meiste Einheiten insgesamt', v: function (s) { return s.total; }, f: function (v) { return v + (v === 1 ? ' Einheit' : ' Einheiten'); } },
+  { e: '🌟', t: 'Spielerin der Woche', d: 'Meiste Einheiten in dieser Woche', v: function (s) { return s.thisWeek; }, f: function (v) { return v + ' diese Woche'; } },
+  { e: '🏃‍♀️', t: 'Kilometerkönigin', d: 'Meiste Lauf-km (Ausdauer + Intervalle)', v: function (s) { return s.km; }, f: function (v) { return km1(v) + ' km'; } },
+  { e: '⚡', t: 'Schnellste', d: 'Beste Pace, auf 5 km normiert (Läufe ab 2 km)', v: function (s) { return s.best; }, f: function (v) { return mmss(v) + ' min/km'; }, low: true },
+  { e: '🛣️', t: 'Längster Lauf', d: 'Weitester einzelner Ausdauerlauf', v: function (s) { return s.longest ? s.longest.distanz_km : 0; }, f: function (v) { return de(v) + ' km'; } },
+  { e: '🔥', t: 'Dauerbrennerin', d: 'In den meisten Wochen aktiv', v: function (s) { return s.nweeks; }, f: function (v) { return v + (v === 1 ? ' Woche' : ' Wochen'); } },
+  { e: '📈', t: 'Größte Steigerung', d: 'Pace: Schnitt der letzten 2 vs. ersten 2 Läufe (ab 4 Läufen)', v: function (s) { return s.improve != null && s.improve > 0 ? s.improve : 0; }, f: function (v) { return Math.round(v) + ' s/km schneller'; } },
+  { e: '🚴‍♀️', t: 'Radkönigin', d: 'Meiste Rad-km', v: function (s) { return s.rad; }, f: function (v) { return km1(v) + ' km'; } },
+  { e: '💪', t: 'Athletik-Ass', d: 'Meiste Teilnahmen am Athletiktraining', v: function (s) { return s.akt.Athletiktraining; }, f: function (v) { return v + '× dabei'; } },
+  { e: '🏋️‍♀️', t: 'Workout-Queen', d: 'Meiste Workouts', v: function (s) { return s.akt.Workout; }, f: function (v) { return v + (v === 1 ? ' Workout' : ' Workouts'); } },
+  { e: '🔁', t: 'Intervall-Profi', d: 'Meiste Intervall-Einheiten', v: function (s) { return s.akt.Intervalle; }, f: function (v) { return v + (v === 1 ? ' Einheit' : ' Einheiten'); } },
+  { e: '⏳', t: 'Ausdauer-Monster', d: 'Meiste erfasste Trainingszeit', v: function (s) { return s.mins; }, f: function (v) { var m = Math.round(v); return m >= 60 ? Math.floor(m / 60) + ' h ' + (m % 60) + ' min' : m + ' min'; } }
+];
+function awardTop(a, stats) {
+  var l = stats.map(function (s) { return { n: s.name, v: a.v(s) }; }).filter(function (x) { return x.v != null && x.v > 0; });
+  l.sort(function (x, y) { return a.low ? x.v - y.v : y.v - x.v || dn(x.n).localeCompare(dn(y.n), 'de'); });
+  // Platzierung mit Gleichstand
+  var rank = 0, last = null;
+  l.forEach(function (x, i) { if (last === null || Math.abs(x.v - last) > 1e-9) { rank = i + 1; last = x.v; } x.r = rank; });
+  return l.filter(function (x) { return x.r <= 3; }).slice(0, 5);
+}
+
+// ---------- Eintragen ----------
+var formInit = false;
+function rosterOptions(sel, first) {
+  var keep = sel.value;
+  var list = S.roster.slice().sort(function (a, b) { return dn(a.name).localeCompare(dn(b.name), 'de'); });
+  sel.innerHTML = '<option value="">' + first + '</option>' +
+    list.map(function (r) { var t = teamsOf(r.team).join('+'); return '<option value="' + esc(r.name) + '">' + esc(dn(r.name)) + (t ? ' (' + t + ')' : '') + '</option>'; }).join('');
+  if (keep) sel.value = keep;
+}
+function initFormOnce() {
+  rosterOptions($('fName'), 'Bitte wählen …'); rosterOptions($('tFilterName'), 'Alle');
+  $('tFilterAkt').innerHTML = '<option value="">Alle</option>' + AKT.map(function (a) { return '<option>' + a + '</option>'; }).join('');
+  var me = store('hd_me'); if (me && S.roster.some(function (r) { return r.name === me; }) && !$('fName').value) $('fName').value = me;
+  if (formInit) return; formInit = true;
+  $('fDatum').value = today(); $('fDatum').max = today();
+  $('athDatum').value = today(); $('athDatum').max = today();
+  ['fDist', 'fPace', 'fDauer', 'fKmh', 'fIntKm', 'fWdh', 'fMeter'].forEach(function (id) { $(id).addEventListener('input', preview); });
+  $('fName').addEventListener('change', function () { if ($('fName').value) store('hd_me', $('fName').value); rMine(); });
+  $('tFilterName').addEventListener('change', rTrainerList); $('tFilterAkt').addEventListener('change', rTrainerList);
+  $('addForm').addEventListener('submit', function (ev) { ev.preventDefault(); submitEntry(false); });
+  $('athForm').addEventListener('submit', submitAthletik);
+  $('playerForm').addEventListener('submit', submitPlayer);
+  $('teamSave').addEventListener('click', saveTeams);
+  $('myDashBtn').addEventListener('click', function () { var m = store('hd_me'); if (m) openPlayer(m); });
+  $('athNone').addEventListener('click', function () { Array.prototype.forEach.call(document.querySelectorAll('#athChecks input'), function (c) { c.checked = false; }); });
+}
+function rEintragen() {
+  var akts = AKT.filter(function (a) { return a !== 'Athletiktraining' || S.role === 'trainer'; });
+  if (akts.indexOf(S.aktion) < 0) S.aktion = 'Ausdauerlauf';
+  $('fAktion').innerHTML = akts.map(function (a) { return '<button type="button" aria-pressed="' + (a === S.aktion) + '" data-a="' + a + '">' + EMO[a] + ' ' + a + '</button>'; }).join('');
+  $('fAktion').onclick = function (ev) { var b = ev.target.closest('button[data-a]'); if (!b) return; S.aktion = b.dataset.a; rEintragen(); };
+  var a = S.aktion;
+  $('grpDist').hidden = !(a === 'Ausdauerlauf' || a === 'Radfahren');
+  $('grpKmh').hidden = a !== 'Radfahren';
+  $('grpPace').hidden = a === 'Radfahren';
+  $('grpInt').hidden = a !== 'Intervalle';
+  $('grpNone').hidden = !(a === 'Workout' || a === 'Athletiktraining');
+  $('grpNone').textContent = a === 'Athletiktraining' ? 'Athletiktraining zählt als Teilnahme. Für mehrere Spielerinnen auf einmal: Tab „Trainer“.' : 'Workouts zählen als Einheit, keine Werte nötig.';
+  preview(); rMine();
+}
+function calc() {
+  var a = S.aktion;
+  if (a === 'Ausdauerlauf' || a === 'Radfahren') {
+    var d = num($('fDist').value), p = a === 'Radfahren' ? (num($('fKmh').value) ? 60 / num($('fKmh').value) : null) : zeit($('fPace').value), t = zeit($('fDauer').value);
+    var n = [d, p, t].filter(Boolean).length;
+    if (n < 2) return null;
+    if (!t) t = d * p; else if (!p) p = t / d; else if (!d) d = t / p;
+    return { d: d, p: p, t: t, n: n };
+  }
+  if (a === 'Intervalle') { var k = num($('fIntKm').value) || (num($('fWdh').value) && num($('fMeter').value) ? num($('fWdh').value) * num($('fMeter').value) / 1000 : null); return k ? { d: k } : null; }
+  return null;
+}
+function preview() {
+  var c = calc(), el = $('preview');
+  if (!c) { el.hidden = true; return; }
+  el.hidden = false;
+  if (S.aktion === 'Intervalle') { el.textContent = '→ ' + de(c.d.toFixed(2)) + ' km gesamt'; return; }
+  var txt = '→ ' + de(c.d.toFixed(2)) + ' km · ' + (S.aktion === 'Radfahren' ? de((60 / c.p).toFixed(1)) + ' km/h' : mmss(c.p) + ' min/km') + ' · ' + dauerFmt(c.t);
+  if (c.n === 3 && Math.abs(c.d * c.p - c.t) / c.t > 0.05) txt = 'Die drei Werte passen nicht zusammen – bitte nur zwei eintragen.';
+  el.textContent = txt;
+}
+function token() { var a = new Uint8Array(12); if (window.crypto && crypto.getRandomValues) crypto.getRandomValues(a); else for (var i = 0; i < a.length; i++) a[i] = Math.random() * 256; return Array.prototype.map.call(a, function (x) { return ('0' + x.toString(16)).slice(-2); }).join(''); }
+function mine() { try { return JSON.parse(store('hd_mine') || '[]'); } catch (e) { return []; } }
+function submitEntry(force) {
+  var m = $('addMsg'); m.hidden = true;
+  if (!$('fName').value) { msg(m, 'bad', 'Bitte auswählen, wer trainiert hat.'); return; }
+  store('hd_me', $('fName').value);
+  var tok = token();
+  var entry = { name: $('fName').value, datum: $('fDatum').value, aktion: S.aktion, notiz: $('fNotiz').value,
+    distanz: S.aktion === 'Intervalle' ? $('fIntKm').value : $('fDist').value, pace: S.aktion === 'Radfahren' ? '' : $('fPace').value, dauer: $('fDauer').value,
+    kmh: S.aktion === 'Radfahren' ? $('fKmh').value : '', wdh: $('fWdh').value, meter_pro_wdh: $('fMeter').value };
+  $('addBtn').disabled = true; $('addBtn').textContent = 'Speichere …';
+  api('add', { entry: entry, force: force, delete_token: tok }).then(function (r) {
+    $('addBtn').disabled = false; $('addBtn').textContent = 'Speichern';
+    if (r.duplicate) {
+      msg(m, 'warn', esc(r.error) + '<button type="button" class="btn small" id="forceBtn">Trotzdem speichern</button>');
+      $('forceBtn').onclick = function () { submitEntry(true); }; return;
+    }
+    if (!r.ok) { msg(m, 'bad', esc(r.error || 'Fehler beim Speichern.')); return; }
+    var list = mine(); list.unshift({ id: r.entry.id, token: tok }); store('hd_mine', JSON.stringify(list.slice(0, 60)));
+    S.entries.push(r.entry); buildNames();
+    ['fDist', 'fPace', 'fDauer', 'fKmh', 'fIntKm', 'fWdh', 'fMeter', 'fNotiz'].forEach(function (id) { $(id).value = ''; });
+    msg(m, 'ok', EMO[r.entry.aktion] + ' Gespeichert: ' + esc(dn(r.entry.name)) + ', ' + esc(r.entry.aktion) + (describe(r.entry) ? ' – ' + esc(describe(r.entry)) : '') + '. Stark!');
+    preview(); rMine();
+  });
+}
+function itemHtml(e, delAttr, noName) {
+  var note = e.hinweis && e.quelle !== 'import' ? e.hinweis.replace('Intervalle: nur Distanz gezaehlt', '').replace(/^;\s*|;\s*$/g, '') : '';
+  return '<div class="item"><span class="emo-s" aria-hidden="true">' + EMO[e.aktion] + '</span><div class="main"><div class="t">' +
+    (noName ? esc(e.aktion) : nameBtn(e.name) + ' · ' + esc(e.aktion)) + '</div><div class="m">' + fdate(e.datum) + (describe(e) ? ' · ' + esc(describe(e)) : '') +
+    (note ? ' · ' + esc(note) : '') + '</div></div>' +
+    (delAttr ? '<button type="button" class="del" ' + delAttr + '>Löschen</button>' : '') + '</div>';
+}
+function bindDeletes(container, after) {
+  container.onclick = function (ev) {
+    var b = ev.target.closest('button.del'); if (!b) return;
+    if (!b.classList.contains('confirm')) { b.classList.add('confirm'); b.textContent = 'Sicher?'; setTimeout(function () { b.classList.remove('confirm'); b.textContent = 'Löschen'; }, 4000); return; }
+    b.disabled = true;
+    api('delete', { id: b.dataset.id, token: b.dataset.tok || '' }).then(function (r) {
+      if (!r.ok) { toast(r.error || 'Löschen fehlgeschlagen'); b.disabled = false; return; }
+      S.entries = S.entries.filter(function (e) { return e.id !== b.dataset.id; });
+      store('hd_mine', JSON.stringify(mine().filter(function (x) { return x.id !== b.dataset.id; })));
+      toast('Gelöscht'); after();
+    });
+  };
+}
+function rMine() {
+  var byId = {}; S.entries.forEach(function (e) { byId[e.id] = e; });
+  var list = mine().filter(function (x) { return byId[x.id]; }).slice(0, 15);
+  $('mineList').innerHTML = list.length ? list.map(function (x) { return itemHtml(byId[x.id], 'data-id="' + esc(x.id) + '" data-tok="' + esc(x.token) + '"'); }).join('')
+    : '<div class="hint">Noch nichts von diesem Gerät eingetragen.</div>';
+  bindDeletes($('mineList'), rMine);
+  var me = store('hd_me'); $('myDashBtn').hidden = !(me && S.roster.some(function (r) { return r.name === me; }));
+  if (me) $('myDashBtn').textContent = '📊 Dashboard von ' + dn(me) + ' öffnen';
+}
+
+// ---------- Übersicht (Team + Spaß) ----------
+function groupStats(members) {
+  var g = { mem: members.length, act: 0, units: 0, km: 0, rad: 0, mins: 0, ath: 0, week: 0 };
+  members.forEach(function (s) { if (s.total) g.act++; g.units += s.total; g.km += s.km; g.rad += s.rad; g.mins += s.mins; g.ath += s.akt.Athletiktraining; g.week += s.thisWeek; });
+  g.per = g.mem ? g.units / g.mem : 0;
+  return g;
+}
+function rUebersicht() {
+  var stats = allStats();
+  var all = groupStats(stats);
+  // Einträge von Personen, die nicht mehr im Kader sind, zählen im Gesamt mit
+  var inRoster = {}; S.roster.forEach(function (r) { inRoster[r.name] = 1; });
+  S.entries.forEach(function (e) { if (!inRoster[e.name]) { all.units++; if (isRunlike(e)) all.km += e.distanz_km || 0; if (e.aktion === 'Radfahren') all.rad += e.distanz_km || 0; } });
+  $('teamAll').innerHTML = '<div><h2>🏑 Alle zusammen</h2><div class="lead">' + (S.entries.length ? 'Seit ' + fdate(S.entries[0].datum) + ' · ' + all.act + ' von ' + all.mem + ' Spielerinnen haben schon trainiert' : 'Noch keine Einheiten – die erste Eintragung eröffnet die Saison!') + '</div></div>' +
+    '<div class="stats">' + [[all.units, 'Einheiten'], [Math.round(all.km), 'km gelaufen'], [Math.round(all.rad), 'km geradelt'], [Math.round(all.mins / 60), 'Stunden'], [all.act + '/' + all.mem, 'aktiv'], [all.week, 'diese Woche']]
+      .map(function (k) { return '<div><b>' + k[0] + '</b><span>' + k[1] + '</span></div>'; }).join('') + '</div>';
+
+  // Teams (automatisch aus der Kader-Zuordnung)
+  var present = TEAMS.filter(function (t) { return stats.some(function (s) { return teamsOf(s.team).indexOf(t) >= 0; }); });
+  var noTeam = stats.filter(function (s) { return !teamsOf(s.team).length; }).length;
+  $('teamInfo').innerHTML = !present.length ? '<div class="info">👥 Die Teams werden zu Saisonbeginn zugeordnet. Danach erscheinen hier automatisch die Team-Wertungen.</div>'
+    : (noTeam ? '<div class="hint">' + noTeam + ' Spielerinnen noch ohne Team.</div>' : '');
+  var tg = present.map(function (t) { var g = groupStats(stats.filter(function (s) { return teamsOf(s.team).indexOf(t) >= 0; })); g.t = t; return g; });
+  var maxPer = Math.max.apply(null, tg.map(function (g) { return g.per; }).concat([0]));
+  $('teamCards').innerHTML = tg.map(function (g) {
+    var lead = tg.length > 1 && g.per > 0 && g.per === maxPer;
+    return '<div class="team"><div class="head"><span class="tn">' + g.t + '</span>' + (lead ? '<span class="lead-badge">🏆 führt</span>' : '') + '</div>' +
+      '<div class="tg"><div><b>' + g.units + '</b><span>Einheiten</span></div><div><b>' + de(g.per.toFixed(1)) + '</b><span>pro Kopf</span></div><div><b>' + Math.round(g.km) + '</b><span>Lauf-km</span></div>' +
+      '<div><b>' + g.act + '/' + g.mem + '</b><span>aktiv</span></div><div><b>' + g.ath + '</b><span>Athletik</span></div><div><b>' + g.week + '</b><span>diese Woche</span></div></div>' +
+      '<div class="bar" title="Einheiten pro Kopf im Vergleich"><i style="width:' + (maxPer ? Math.round(100 * g.per / maxPer) : 0) + '%"></i></div></div>';
+  }).join('');
+
+  // Auszeichnungen
+  var medals = ['🥇', '🥈', '🥉'];
+  var cards = AWARDS.map(function (a) {
+    var top = awardTop(a, stats); if (!top.length) return '';
+    var winners = top.filter(function (x) { return x.r === 1; });
+    return '<div class="award"><div class="top"><div class="emo" aria-hidden="true">' + a.e + '</div><div><div class="tt">' + a.t + '</div>' +
+      '<div class="win">' + winners.map(function (w) { return nameBtn(w.n); }).join(' & ') + '</div><div class="val">' + a.f(winners[0].v) + '</div></div></div>' +
+      '<div class="podium">' + top.map(function (x) { return '<button type="button" class="r' + x.r + '" data-player="' + esc(x.n) + '"><span>' + medals[x.r - 1] + ' ' + esc(dn(x.n)) + '</span><span>' + a.f(x.v) + '</span></button>'; }).join('') + '</div>' +
+      '<div class="desc">' + a.d + '</div></div>';
+  }).join('');
+  $('awards').innerHTML = cards || '<div class="info">🏁 Sobald die ersten Einheiten eingetragen sind, werden hier die Auszeichnungen vergeben.</div>';
+  $('awardsSub').textContent = 'Tippen für Details';
+
+  // Wochenverlauf (letzte 10 Wochen)
+  var W = S.entries.length ? weeksRange(S.entries[0].datum, today()).slice(-10) : weeksRange(today(), today());
+  var idx = {}; W.forEach(function (w, i) { idx[w] = i; });
+  var per = {}; AKT.forEach(function (a) { per[a] = W.map(function () { return 0; }); });
+  S.entries.forEach(function (e) { var i = idx[monday(e.datum)]; if (i != null) per[e.aktion][i]++; });
+  $('legendWeek').innerHTML = AKT.map(function (a) { return '<span><i style="background:' + col(a) + '"></i>' + a + '</span>'; }).join('');
+  S.charts.cWeek = new Chart($('cWeek'), { type: 'bar', data: { labels: W.map(function (w) { return 'KW' + kwNum(w); }),
+    datasets: AKT.map(function (a) { return { label: a, data: per[a], backgroundColor: col(a), stack: 's', borderRadius: 4 }; }) },
+    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false }, tooltip: { mode: 'index', intersect: false } },
+      scales: { x: { stacked: true, grid: { display: false } }, y: { stacked: true, beginAtZero: true, ticks: { precision: 0 } } } } });
+
+  var feed = S.entries.slice().sort(function (a, b) { return (b.erstellt || '') < (a.erstellt || '') ? -1 : 1; }).slice(0, 8);
+  $('feed').innerHTML = feed.map(function (e) { return itemHtml(e); }).join('') || '<div class="hint">Noch keine Einheiten. Die erste im Tab „Eintragen“ erfassen.</div>';
+}
+
+// ---------- Ranking (alle Werte) ----------
+var COLS = [
+  { k: 'total', l: 'Einh.', v: function (s) { return s.total; }, f: function (v) { return v; } },
+  { k: 'km', l: 'Lauf-km', v: function (s) { return s.km; }, f: function (v) { return km1(v); } },
+  { k: 'best', l: 'Best-Pace', v: function (s) { return s.best; }, f: function (v) { return v ? mmss(v) : '–'; }, low: true },
+  { k: 'lauf', l: 'Läufe', v: function (s) { return s.akt.Ausdauerlauf; }, f: function (v) { return v; } },
+  { k: 'int', l: 'Interv.', v: function (s) { return s.akt.Intervalle; }, f: function (v) { return v; } },
+  { k: 'wo', l: 'Workout', v: function (s) { return s.akt.Workout; }, f: function (v) { return v; } },
+  { k: 'ath', l: 'Athletik', v: function (s) { return s.akt.Athletiktraining; }, f: function (v) { return v; } },
+  { k: 'rad', l: 'Rad-km', v: function (s) { return s.rad; }, f: function (v) { return km1(v); } },
+  { k: 'weeks', l: 'Wochen', v: function (s) { return s.nweeks; }, f: function (v) { return v; } },
+  { k: 'week', l: 'Diese Wo.', v: function (s) { return s.thisWeek; }, f: function (v) { return v; } }
+];
+function rRanking() {
+  var stats = allStats();
+  var present = TEAMS.filter(function (t) { return stats.some(function (s) { return teamsOf(s.team).indexOf(t) >= 0; }); });
+  if (S.rankTeam && present.indexOf(S.rankTeam) < 0) S.rankTeam = '';
+  $('rankTeam').innerHTML = present.length ? [''].concat(present).map(function (t) { return '<button type="button" aria-pressed="' + (S.rankTeam === t) + '" data-t="' + t + '">' + (t || 'Alle') + '</button>'; }).join('') : '';
+  $('rankTeam').onclick = function (ev) { var b = ev.target.closest('button[data-t]'); if (!b) return; S.rankTeam = b.dataset.t; rRanking(); };
+  if (S.rankTeam) stats = stats.filter(function (s) { return teamsOf(s.team).indexOf(S.rankTeam) >= 0; });
+  var c = COLS.filter(function (x) { return x.k === S.sort; })[0] || COLS[0];
+  stats.sort(function (a, b) {
+    var va = c.v(a), vb = c.v(b);
+    if (c.low) { va = va || Infinity; vb = vb || Infinity; return va - vb || b.total - a.total; }
+    return vb - va || b.total - a.total || dn(a.name).localeCompare(dn(b.name), 'de');
+  });
+  var me = store('hd_me'), medals = ['🥇', '🥈', '🥉'];
+  $('rankTable').innerHTML = '<thead><tr><th>#</th><th>Name</th>' + COLS.map(function (x) { return '<th class="num sort' + (x.k === c.k ? ' on' : '') + '" data-sort="' + x.k + '">' + x.l + (x.k === c.k ? ' ▾' : '') + '</th>'; }).join('') + '</tr></thead><tbody>' +
+    stats.map(function (s, i) {
+      var has = c.low ? !!c.v(s) : c.v(s) > 0;
+      return '<tr class="click' + (s.total ? '' : ' zero') + (s.name === me ? ' me' : '') + '" data-player="' + esc(s.name) + '"><td>' + (has && i < 3 ? medals[i] : i + 1) + '</td><td class="nmcell"><b>' + esc(dn(s.name)) + '</b>' + teamPills(s.team) + '</td>' +
+        COLS.map(function (x) { return '<td class="num' + (x.k === c.k ? ' sorted' : '') + '">' + x.f(x.v(s)) + '</td>'; }).join('') + '</tr>';
+    }).join('') + '</tbody>';
+  $('rankTable').querySelector('thead').onclick = function (ev) { var th = ev.target.closest('th[data-sort]'); if (!th) return; ev.stopPropagation(); S.sort = th.dataset.sort; rRanking(); };
+}
+
+// ---------- Persönliches Dashboard ----------
+function openPlayer(name) {
+  if (!name) return;
+  S.openName = name;
+  var stats = allStats(), s = stats.filter(function (x) { return x.name === name; })[0] || personStats(name);
+  var r = S.roster.filter(function (x) { return x.name === name; })[0];
+  var sorted = stats.slice().sort(function (a, b) { return b.total - a.total; });
+  var pos = sorted.findIndex(function (x) { return x.name === name; }) + 1;
+  $('pTitle').textContent = dn(name);
+  $('pSub').innerHTML = (r ? teamPills(r.team) + ' ' : '') + (s.total ? 'Platz ' + pos + ' von ' + stats.length + ' nach Einheiten' : 'Noch keine Einheiten eingetragen');
+  var medals = ['🥇', '🥈', '🥉'], badges = [];
+  AWARDS.forEach(function (a) { awardTop(a, stats).forEach(function (x) { if (x.n === name) badges.push('<span class="badge r' + x.r + '">' + medals[x.r - 1] + ' ' + a.e + ' ' + a.t + '</span>'); }); });
+  $('pBadges').innerHTML = badges.join('');
+  $('pKpis').innerHTML = [[s.total, 'Einheiten'], [km1(s.km), 'Lauf-km'], [s.best ? mmss(s.best) : '–', 'Best-Pace (5 km norm.)'], [s.longest ? de(s.longest.distanz_km) + ' km' : '–', 'Längster Lauf'],
+    [km1(s.rad), 'Rad-km'], [s.akt.Athletiktraining, 'Athletik'], [s.nweeks, 'aktive Wochen'], [s.thisWeek, 'diese Woche']]
+    .map(function (k) { return '<div class="kpi"><b>' + k[0] + '</b><span>' + k[1] + '</span></div>'; }).join('');
+  var mx = Math.max.apply(null, AKT.map(function (a) { return s.akt[a]; }).concat([1]));
+  $('pTypes').innerHTML = AKT.map(function (a) { return '<div class="tb"><span>' + EMO[a] + ' ' + a + '</span><div class="bar"><i style="width:' + Math.round(100 * s.akt[a] / mx) + '%;background:' + col(a) + '"></i></div><b>' + s.akt[a] + '</b></div>'; }).join('');
+  var p = s.entries.filter(paced);
+  var b = p.slice().sort(function (x, y) { return norm(x.distanz_km, x.pace_min_km) - norm(y.distanz_km, y.pace_min_km); }).slice(0, 5);
+  $('pBest').innerHTML = b.length ? '<thead><tr><th>Datum</th><th class="num">Distanz</th><th class="num">Pace</th><th class="num">Norm.</th></tr></thead><tbody>' +
+    b.map(function (e, i) { return '<tr><td>' + (i < 3 ? medals[i] + ' ' : '') + fdate(e.datum) + '</td><td class="num">' + de(e.distanz_km) + ' km</td><td class="num">' + mmss(e.pace_min_km) + '</td><td class="num"><b>' + mmss(norm(e.distanz_km, e.pace_min_km)) + '</b></td></tr>'; }).join('') + '</tbody>'
+    : '<tbody><tr><td class="hint">Noch keine Läufe mit Zeit ab 2 km.</td></tr></tbody>';
+  $('pList').innerHTML = s.entries.slice().reverse().map(function (e) { return itemHtml(e, null, true); }).join('') || '<div class="hint">Noch keine Einheiten.</div>';
+  $('sheetBg').hidden = false; document.body.classList.add('noscroll');
+  if (S.charts.cPPace) { S.charts.cPPace.destroy(); delete S.charts.cPPace; }
+  if (window.Chart) {
+    S.charts.cPPace = new Chart($('cPPace'), { type: 'line', data: { datasets: [{ label: dn(name), data: p.map(function (e) { return { x: new Date(e.datum + 'T12:00:00').getTime(), y: norm(e.distanz_km, e.pace_min_km) }; }),
+      borderColor: col('Ausdauerlauf'), backgroundColor: col('Ausdauerlauf'), pointRadius: 5, borderWidth: 2.5, tension: .2 }] },
+      options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false }, tooltip: { callbacks: { title: function (it) { return new Date(it[0].parsed.x).toLocaleDateString('de-DE'); }, label: function (it) { return mmss(it.parsed.y) + ' min/km'; } } } },
+        scales: { x: { type: 'linear', ticks: { maxTicksLimit: 6, callback: function (v) { var d = new Date(v); return d.getDate() + '.' + (d.getMonth() + 1) + '.'; } } }, y: { reverse: true, ticks: { callback: function (v) { return mmss(v); } } } } } });
+  }
+  setTimeout(function () { $('pClose').focus(); }, 30);
+}
+function closePlayer() {
+  $('sheetBg').hidden = true; document.body.classList.remove('noscroll'); S.openName = null;
+  if (S.charts.cPPace) { S.charts.cPPace.destroy(); delete S.charts.cPPace; }
+}
+$('pClose').addEventListener('click', closePlayer);
+$('sheetBg').addEventListener('click', function (ev) { if (ev.target === $('sheetBg')) closePlayer(); });
+document.addEventListener('keydown', function (ev) { if (ev.key === 'Escape' && !$('sheetBg').hidden) closePlayer(); });
+
+// ---------- Trainer ----------
+function rTrainer() {
+  var isT = S.role === 'trainer';
+  $('trLogin').hidden = isT; $('trContent').hidden = !isT;
+  if (!isT) return;
+  var prev = {}; Array.prototype.forEach.call(document.querySelectorAll('#athChecks input:checked'), function (c) { prev[c.value] = 1; });
+  var list = S.roster.slice().sort(function (a, b) { return dn(a.name).localeCompare(dn(b.name), 'de'); });
+  $('athChecks').innerHTML = list.map(function (r) { return '<label><input type="checkbox" value="' + esc(r.name) + '"' + (prev[r.name] ? ' checked' : '') + '>' + esc(dn(r.name)) + teamPills(r.team) + '</label>'; }).join('');
+  rTeamEditor();
+  $('plTeams').innerHTML = TEAMS.map(function (t) { return '<button type="button" aria-pressed="' + !!S.newTeams[t] + '" data-t="' + t + '">' + t + '</button>'; }).join('');
+  $('plTeams').onclick = function (ev) { var b = ev.target.closest('button[data-t]'); if (!b) return; S.newTeams[b.dataset.t] = !S.newTeams[b.dataset.t]; b.setAttribute('aria-pressed', String(!!S.newTeams[b.dataset.t])); };
+  $('plCount').textContent = 'Kader aktuell: ' + S.roster.length + ' Spielerinnen.';
+  rTrainerStats();
+  rTrainerList();
+}
+function rTeamEditor() {
+  var list = S.roster.slice().sort(function (a, b) { return dn(a.name).localeCompare(dn(b.name), 'de'); });
+  $('teamEditor').innerHTML = list.map(function (r) {
+    var cur = S.teamDraft[r.name] != null ? teamsOf(S.teamDraft[r.name]) : teamsOf(r.team);
+    var changed = S.teamDraft[r.name] != null && S.teamDraft[r.name] !== teamStr(teamsOf(r.team));
+    return '<div class="trow' + (changed ? ' changed' : '') + '"><b>' + esc(dn(r.name)) + '</b><div class="seg small" data-name="' + esc(r.name) + '">' +
+      TEAMS.map(function (t) { return '<button type="button" aria-pressed="' + (cur.indexOf(t) >= 0) + '" data-t="' + t + '">' + t + '</button>'; }).join('') +
+      '</div><button type="button" class="del" data-remove="' + esc(r.name) + '">Entfernen</button></div>';
+  }).join('');
+  var n = Object.keys(S.teamDraft).filter(function (k) { var r = S.roster.filter(function (x) { return x.name === k; })[0]; return r && S.teamDraft[k] !== teamStr(teamsOf(r.team)); }).length;
+  $('teamSave').textContent = n ? 'Teams speichern (' + n + ' Änderung' + (n > 1 ? 'en' : '') + ')' : 'Teams speichern';
+  $('teamSave').disabled = !n;
+  $('teamEditor').onclick = function (ev) {
+    var rm = ev.target.closest('button[data-remove]');
+    if (rm) {
+      if (!rm.classList.contains('confirm')) { rm.classList.add('confirm'); rm.textContent = 'Wirklich entfernen?'; setTimeout(function () { rm.classList.remove('confirm'); rm.textContent = 'Entfernen'; }, 4000); return; }
+      rm.disabled = true;
+      api('removePlayer', { name: rm.dataset.remove }).then(function (r) {
+        if (!r.ok) { toast(r.error || 'Entfernen fehlgeschlagen'); rm.disabled = false; return; }
+        delete S.teamDraft[rm.dataset.remove];
+        msg($('teamMsg'), 'ok', esc(dn(rm.dataset.remove)) + ' wurde aus dem Kader entfernt.');
+        load(true);
+      });
+      return;
+    }
+    var b = ev.target.closest('button[data-t]'); if (!b) return;
+    var seg = b.parentNode, name = seg.dataset.name, r = S.roster.filter(function (x) { return x.name === name; })[0];
+    var cur = S.teamDraft[name] != null ? teamsOf(S.teamDraft[name]) : teamsOf(r.team), t = b.dataset.t;
+    cur = cur.indexOf(t) >= 0 ? cur.filter(function (x) { return x !== t; }) : cur.concat([t]);
+    S.teamDraft[name] = teamStr(cur); rTeamEditor();
+  };
+}
+function saveTeams() {
+  var changes = Object.keys(S.teamDraft).map(function (k) { return { name: k, team: S.teamDraft[k] }; });
+  if (!changes.length) return;
+  $('teamSave').disabled = true;
+  api('setTeams', { changes: changes }).then(function (r) {
+    if (!r.ok) { msg($('teamMsg'), 'bad', esc(r.error || 'Fehler')); $('teamSave').disabled = false; return; }
+    S.teamDraft = {}; msg($('teamMsg'), 'ok', r.updated + ' Spielerin(nen) aktualisiert. Team-Karten und Filter sind angepasst.');
+    load(true);
+  });
+}
+function rTrainerStats() {
+  var E = S.entries;
+  var ath = E.filter(function (e) { return e.aktion === 'Athletiktraining'; });
+  var dates = Array.from(new Set(ath.map(function (e) { return e.datum; }))).sort();
+  var cnt = dates.map(function (d) { return ath.filter(function (e) { return e.datum === d; }).length; });
+  var avg = cnt.length ? cnt.reduce(function (a, b) { return a + b; }, 0) / cnt.length : 0;
+  $('athSub').textContent = dates.length ? dates.length + ' Termine, im Schnitt ' + de(avg.toFixed(1)) + ' von ' + S.roster.length + ' Spielerinnen.' : 'Noch keine Termine erfasst.';
+  S.charts.cAth = new Chart($('cAth'), { type: 'bar', data: { labels: dates.map(fdate), datasets: [{ data: cnt, backgroundColor: col('Athletiktraining'), borderRadius: 5 }] },
+    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { x: { grid: { display: false } }, y: { beginAtZero: true, ticks: { precision: 0 } } } } });
+  var set = {}; ath.forEach(function (e) { set[e.name + '|' + e.datum] = 1; });
+  var people = Array.from(new Set(ath.map(function (e) { return e.name; })));
+  people.sort(function (a, b) { return ath.filter(function (e) { return e.name === b; }).length - ath.filter(function (e) { return e.name === a; }).length || dn(a).localeCompare(dn(b)); });
+  $('athTable').innerHTML = dates.length ? '<thead><tr><th></th>' + dates.map(function (d) { return '<th>' + fdate(d) + '</th>'; }).join('') + '<th>Σ</th></tr></thead><tbody>' +
+    people.map(function (n) { var c = 0; return '<tr><td class="nm">' + esc(dn(n)) + '</td>' + dates.map(function (d) { var y = set[n + '|' + d]; if (y) c++; return '<td class="' + (y ? 'a1' : 'h0') + '">' + (y ? '✓' : '') + '</td>'; }).join('') + '<td><b>' + c + '</b></td></tr>'; }).join('') +
+    '<tr><td class="nm">Gesamt</td>' + cnt.map(function (c) { return '<td><b>' + c + '</b></td>'; }).join('') + '<td></td></tr></tbody>' : '';
+  var W = E.length ? weeksRange(E[0].datum, today()) : [];
+  var idx = {}; W.forEach(function (w, i) { idx[w] = i; });
+  var names = Array.from(new Set(E.map(function (e) { return e.name; })));
+  var M = names.map(function (n) { var c = W.map(function () { return 0; }); E.forEach(function (e) { if (e.name === n) c[idx[monday(e.datum)]]++; }); return { n: n, c: c, w: c.filter(Boolean).length, t: c.reduce(function (a, b) { return a + b; }, 0) }; });
+  M.sort(function (a, b) { return b.w - a.w || b.t - a.t; });
+  var hc = function (v) { return v === 0 ? 'h0' : v === 1 ? 'h1' : v === 2 ? 'h2' : v <= 4 ? 'h3' : 'h4'; };
+  $('actTable').innerHTML = W.length ? '<thead><tr><th></th>' + W.map(function (w) { return '<th>' + kwNum(w) + '</th>'; }).join('') + '<th>Wo.</th></tr></thead><tbody>' +
+    M.map(function (r) { return '<tr><td class="nm">' + esc(dn(r.n)) + '</td>' + r.c.map(function (v) { return '<td class="' + hc(v) + '">' + (v || '') + '</td>'; }).join('') + '<td><b>' + r.w + '</b></td></tr>'; }).join('') + '</tbody>' : '';
+}
+function rTrainerList() {
+  var n = $('tFilterName').value, a = $('tFilterAkt').value;
+  var list = S.entries.filter(function (e) { return (!n || e.name === n) && (!a || e.aktion === a); }).slice().reverse().slice(0, 150);
+  $('tList').innerHTML = list.map(function (e) { return itemHtml(e, 'data-id="' + esc(e.id) + '"'); }).join('') || '<div class="hint">Keine Einträge.</div>';
+  bindDeletes($('tList'), rTrainerList);
+}
+function submitPlayer(ev) {
+  ev.preventDefault();
+  var m = $('plMsg'), name = $('plName').value.replace(/\s+/g, ' ').trim();
+  var team = teamStr(TEAMS.filter(function (t) { return S.newTeams[t]; }));
+  if (name.split(' ').length < 2) { msg(m, 'bad', 'Bitte Vor- und Nachname eintragen.'); return; }
+  $('plBtn').disabled = true;
+  api('addPlayer', { name: name, team: team }).then(function (r) {
+    $('plBtn').disabled = false;
+    if (!r.ok) { msg(m, 'bad', esc(r.error || 'Fehler')); return; }
+    $('plName').value = ''; S.newTeams = {};
+    msg(m, 'ok', esc(r.player.name) + (r.player.team ? ' (' + esc(r.player.team) + ')' : '') + ' ist jetzt im Kader. 👋');
+    load(true);
+  });
+}
+function submitAthletik(ev) {
+  ev.preventDefault();
+  var names = Array.prototype.map.call(document.querySelectorAll('#athChecks input:checked'), function (c) { return c.value; });
+  var m = $('athMsg');
+  if (!names.length) { msg(m, 'bad', 'Bitte mindestens eine Spielerin ankreuzen.'); return; }
+  $('athBtn').disabled = true;
+  api('athletik', { datum: $('athDatum').value, names: names }).then(function (r) {
+    $('athBtn').disabled = false;
+    if (!r.ok) { msg(m, 'bad', esc(r.error || 'Fehler')); return; }
+    msg(m, 'ok', '💪 ' + r.added + ' Teilnahme(n) am ' + fdate($('athDatum').value) + ' gespeichert.' + (r.skipped.length ? ' Schon vorhanden: ' + esc(r.skipped.map(dn).join(', ')) + '.' : ''));
+    Array.prototype.forEach.call(document.querySelectorAll('#athChecks input'), function (c) { c.checked = false; });
+    load(true);
+  });
+}
+
+// ---------- Start ----------
+try { matchMedia('(prefers-color-scheme: dark)').addEventListener('change', function () { if (S.roster.length) render(); }); } catch (e) {}
+if (!API || API.indexOf('HIER_') === 0) {
+  $('loading').innerHTML = 'Noch nicht eingerichtet: In <b>config.js</b> fehlt die Apps-Script-URL (siehe ANLEITUNG.md).';
+  return;
+}
+var v = store('hd_view'); if (v) S.view = v;
+S.code = store('hd_code');
+if (S.code) load(); else { $('loading').hidden = true; showGate(); }
+})();
+</script>
+</body>
+</html>
