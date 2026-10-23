@@ -106,6 +106,27 @@ button.linkname { all: unset; cursor: pointer; font-weight: inherit; }
 button.linkname:hover { text-decoration: underline; }
 button.linkname:focus-visible { outline: 2px solid var(--accent); border-radius: 4px; }
 
+/* Schlag den Coach */
+.coachbox { background: var(--card); border: 2px dashed var(--gold); border-radius: 18px; padding: 16px; display: grid; gap: 12px; }
+.cb-head { display: flex; gap: 12px; align-items: center; }
+.cb-head > div:nth-child(2) { flex: 1; min-width: 0; }
+.cb-head h2 { margin: 0; font-size: 19px; }
+.cb-head .sub { color: var(--muted); font-size: 13px; }
+.cb-emo-big { font-size: 34px; width: 52px; height: 52px; display: grid; place-items: center; background: var(--gold-soft); border-radius: 14px; flex: none; }
+.cb-week { background: var(--ok-soft); color: var(--ok); border-radius: 10px; padding: 9px 12px; font-size: 14px; font-weight: 600; }
+.cb-rows { display: grid; gap: 6px; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); }
+.cb-row { display: flex; align-items: center; gap: 10px; padding: 9px 10px; border: 1px solid var(--line); border-radius: 12px; background: var(--bg); }
+.cb-emo { font-size: 20px; width: 26px; text-align: center; flex: none; }
+.cb-main { flex: 1; min-width: 0; font-size: 14px; }
+.cb-vals { color: var(--muted); font-size: 12px; font-variant-numeric: tabular-nums; }
+.cb-win { font-size: 12px; font-weight: 700; color: var(--ok); white-space: nowrap; }
+.cb-open { font-size: 12px; color: var(--muted); white-space: nowrap; }
+tr.coachrow td { background: var(--gold-soft); border-top: 2px dashed var(--gold); }
+tr.coachrow td.nmcell { background: var(--gold-soft); }
+.mv { display: inline-block; margin-left: 6px; font-size: 11px; font-weight: 800; font-variant-numeric: tabular-nums; }
+.mv.up { color: var(--ok); } .mv.down { color: var(--bad); } .mv.same { color: var(--muted); }
+.badge.beat { background: var(--ok-soft); color: var(--ok); }
+
 /* Formular */
 .field { display: grid; gap: 5px; }
 .field label { font-size: 13px; font-weight: 600; color: var(--muted); }
@@ -281,6 +302,8 @@ footer button { background: none; border: 0; color: var(--accent); cursor: point
     <div class="sec-title"><h2>🏆 Auszeichnungen</h2><span id="awardsSub"></span></div>
     <div class="awards" id="awards"></div>
 
+    <div class="coachbox" id="coachBox" hidden></div>
+
     <div class="cols">
       <div class="card">
         <h2>📈 So lief's die letzten Wochen</h2>
@@ -296,7 +319,7 @@ footer button { background: none; border: 0; color: var(--accent); cursor: point
   <section class="view" id="v-ranking" hidden>
     <div class="card">
       <h2>Alle Werte im Überblick</h2>
-      <p class="sub">Auf eine Spalte tippen zum Sortieren, auf einen Namen für das persönliche Dashboard.</p>
+      <p class="sub">Auf eine Spalte tippen zum Sortieren, auf einen Namen für das persönliche Dashboard. ▲▼ = Plätze gewonnen/verloren gegenüber vor 7 Tagen.</p>
       <div class="seg small" id="rankTeam" style="margin:0 0 12px"></div>
       <div class="scroll"><table id="rankTable"></table></div>
     </div>
@@ -327,7 +350,7 @@ footer button { background: none; border: 0; color: var(--accent); cursor: point
     </div>
     <div class="card">
       <h2>Kader verwalten</h2>
-      <p class="sub">Teams antippen (mehrere möglich) und speichern – Team-Karten und Filter entstehen automatisch. „Entfernen“ nimmt eine Spielerin aus Kader und Ranking; ihre bisherigen Einheiten zählen weiter im Team-Gesamt.</p>
+      <p class="sub">Teams antippen (mehrere möglich) und speichern – Team-Karten und Filter entstehen automatisch. „🧢 Coach“ markiert dich: außer Konkurrenz, nur in „Schlag den Coach“. „Entfernen“ nimmt eine Spielerin aus Kader und Ranking; ihre bisherigen Einheiten zählen weiter im Team-Gesamt.</p>
       <div id="teamEditor"></div>
       <div class="msg" id="teamMsg" hidden></div>
       <button class="btn" id="teamSave" type="button" style="margin-top:12px">Teams speichern</button>
@@ -429,7 +452,12 @@ function today() { var d = new Date(); d.setMinutes(d.getMinutes() - d.getTimezo
 function monday(iso) { var d = new Date(iso + 'T12:00:00Z'); var wd = (d.getUTCDay() + 6) % 7; d.setUTCDate(d.getUTCDate() - wd); return d.toISOString().slice(0, 10); }
 function kwNum(iso) { var d = new Date(iso + 'T12:00:00Z'); d.setUTCDate(d.getUTCDate() + 3 - (d.getUTCDay() + 6) % 7); var y = new Date(Date.UTC(d.getUTCFullYear(), 0, 4)); return 1 + Math.round(((d - y) / 86400000 - 3 + (y.getUTCDay() + 6) % 7) / 7); }
 function teamsOf(t) { var m = String(t || '').match(/D[1-4]/g) || []; return TEAMS.filter(function (x) { return m.indexOf(x) >= 0; }); }
-function teamStr(arr) { return TEAMS.filter(function (x) { return arr.indexOf(x) >= 0; }).join('+'); }
+function isCoachT(t) { return /coach/i.test(String(t || '')); }
+function tokensOf(t) { return teamsOf(t).concat(isCoachT(t) ? ['Coach'] : []); }
+function teamStr(arr) { return TEAMS.concat(['Coach']).filter(function (x) { return arr.indexOf(x) >= 0; }).join('+'); }
+function coaches() { return S.roster.filter(function (r) { return isCoachT(r.team); }); }
+function isCoachName(n) { return S.roster.some(function (r) { return r.name === n && isCoachT(r.team); }); }
+function coachLabel(n) { return 'Coach ' + n.split(/\s+/)[0]; }
 function teamPills(t) { return teamsOf(t).map(function (x) { return '<span class="pill">' + x + '</span>'; }).join(''); }
 var DN = {};
 function buildNames() {
@@ -473,7 +501,7 @@ function load(silent) {
     S.role = r.role; S.roster = r.roster; S.entries = r.entries;
     S.entries.sort(function (a, b) { return a.datum < b.datum ? -1 : a.datum > b.datum ? 1 : (a.erstellt < b.erstellt ? -1 : 1); });
     buildNames();
-    $('stand').textContent = S.roster.length + ' Spielerinnen · ' + S.entries.length + ' Einheiten' + (S.role === 'trainer' ? ' · Trainer' : '');
+    $('stand').textContent = (S.roster.length - coaches().length) + ' Spielerinnen · ' + S.entries.length + ' Einheiten' + (S.role === 'trainer' ? ' · Trainer' : '');
     $('foot').hidden = false;
     $('footInfo').textContent = 'Stand ' + new Date(r.stand).toLocaleString('de-DE', { dateStyle: 'short', timeStyle: 'short' });
     initFormOnce(); render();
@@ -538,8 +566,8 @@ function weeksRange(from, to) {
   while (d <= end) { out.push(d.toISOString().slice(0, 10)); d.setUTCDate(d.getUTCDate() + 7); }
   return out;
 }
-function personStats(name) {
-  var es = S.entries.filter(function (e) { return e.name === name; });
+function personStats(name, bis) {
+  var es = S.entries.filter(function (e) { return e.name === name && (!bis || e.datum <= bis); });
   var s = { name: name, total: es.length, km: 0, rad: 0, mins: 0, akt: {}, weeks: {}, entries: es, longest: null, thisWeek: 0 };
   var tw = monday(today());
   AKT.forEach(function (a) { s.akt[a] = 0; });
@@ -561,7 +589,7 @@ function personStats(name) {
   }
   return s;
 }
-function allStats() { return S.roster.map(function (r) { var s = personStats(r.name); s.team = r.team; return s; }); }
+function allStats() { return S.roster.filter(function (r) { return !isCoachT(r.team); }).map(function (r) { var s = personStats(r.name); s.team = r.team; return s; }); }
 
 // Auszeichnungen: jede liefert Wert pro Spielerin; Top 3 mit Wert > 0 (bzw. vorhanden)
 var AWARDS = [
@@ -716,7 +744,8 @@ function rUebersicht() {
   // Einträge von Personen, die nicht mehr im Kader sind, zählen im Gesamt mit
   var inRoster = {}; S.roster.forEach(function (r) { inRoster[r.name] = 1; });
   S.entries.forEach(function (e) { if (!inRoster[e.name]) { all.units++; if (isRunlike(e)) all.km += e.distanz_km || 0; if (e.aktion === 'Radfahren') all.rad += e.distanz_km || 0; } });
-  $('teamAll').innerHTML = '<div><h2>🏑 Alle zusammen</h2><div class="lead">' + (S.entries.length ? 'Seit ' + fdate(S.entries[0].datum) + ' · ' + all.act + ' von ' + all.mem + ' Spielerinnen haben schon trainiert' : 'Noch keine Einheiten – die erste Eintragung eröffnet die Saison!') + '</div></div>' +
+  var girlsE = S.entries.filter(function (e) { return !isCoachName(e.name); });
+  $('teamAll').innerHTML = '<div><h2>🏑 Alle zusammen</h2><div class="lead">' + (girlsE.length ? 'Seit ' + fdate(girlsE[0].datum) + ' · ' + all.act + ' von ' + all.mem + ' Spielerinnen haben schon trainiert' : 'Noch keine Einheiten – die erste Eintragung eröffnet die Saison!') + '</div></div>' +
     '<div class="stats">' + [[all.units, 'Einheiten'], [Math.round(all.km), 'km gelaufen'], [Math.round(all.rad), 'km geradelt'], [Math.round(all.mins / 60), 'Stunden'], [all.act + '/' + all.mem, 'aktiv'], [all.week, 'diese Woche']]
       .map(function (k) { return '<div><b>' + k[0] + '</b><span>' + k[1] + '</span></div>'; }).join('') + '</div>';
 
@@ -747,20 +776,53 @@ function rUebersicht() {
   }).join('');
   $('awards').innerHTML = cards || '<div class="info">🏁 Sobald die ersten Einheiten eingetragen sind, werden hier die Auszeichnungen vergeben.</div>';
   $('awardsSub').textContent = 'Tippen für Details';
+  rCoach(stats);
 
   // Wochenverlauf (letzte 10 Wochen)
   var W = S.entries.length ? weeksRange(S.entries[0].datum, today()).slice(-10) : weeksRange(today(), today());
   var idx = {}; W.forEach(function (w, i) { idx[w] = i; });
   var per = {}; AKT.forEach(function (a) { per[a] = W.map(function () { return 0; }); });
-  S.entries.forEach(function (e) { var i = idx[monday(e.datum)]; if (i != null) per[e.aktion][i]++; });
+  S.entries.forEach(function (e) { if (isCoachName(e.name)) return; var i = idx[monday(e.datum)]; if (i != null) per[e.aktion][i]++; });
   $('legendWeek').innerHTML = AKT.map(function (a) { return '<span><i style="background:' + col(a) + '"></i>' + a + '</span>'; }).join('');
   S.charts.cWeek = new Chart($('cWeek'), { type: 'bar', data: { labels: W.map(function (w) { return 'KW' + kwNum(w); }),
     datasets: AKT.map(function (a) { return { label: a, data: per[a], backgroundColor: col(a), stack: 's', borderRadius: 4 }; }) },
     options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false }, tooltip: { mode: 'index', intersect: false } },
       scales: { x: { stacked: true, grid: { display: false } }, y: { stacked: true, beginAtZero: true, ticks: { precision: 0 } } } } });
 
-  var feed = S.entries.slice().sort(function (a, b) { return (b.erstellt || '') < (a.erstellt || '') ? -1 : 1; }).slice(0, 8);
+  var feed = S.entries.filter(function (e) { return !isCoachName(e.name); }).sort(function (a, b) { return (b.erstellt || '') < (a.erstellt || '') ? -1 : 1; }).slice(0, 8);
   $('feed').innerHTML = feed.map(function (e) { return itemHtml(e); }).join('') || '<div class="hint">Noch keine Einheiten. Die erste im Tab „Eintragen“ erfassen.</div>';
+}
+
+// ---------- Schlag den Coach ----------
+var COACH_METRICS = [
+  { e: '👑', t: 'Einheiten gesamt', v: function (s) { return s.total; }, f: function (v) { return v; } },
+  { e: '🏃‍♀️', t: 'Laufen + Intervalle', v: function (s) { return s.km; }, f: function (v) { return km1(v) + ' km'; } }
+];
+function beats(m, g, c) {
+  var gv = m.v(g), cv = m.v(c);
+  if (m.low) return !!gv && (!cv || gv < cv - 1e-9);
+  return gv > 0 && gv > cv;
+}
+function rCoach(stats) {
+  var cs = coaches(), box = $('coachBox');
+  if (!cs.length) { box.hidden = true; box.innerHTML = ''; return; }
+  box.hidden = false;
+  box.innerHTML = cs.map(function (co) {
+    var c = personStats(co.name);
+    var any = stats.filter(function (g) { return COACH_METRICS.some(function (m) { return beats(m, g, c); }); });
+    var rows = COACH_METRICS.map(function (m) {
+      var bt = stats.filter(function (g) { return beats(m, g, c); });
+      var top = stats.filter(function (g) { return m.low ? !!m.v(g) : m.v(g) > 0; }).sort(function (a, b) { return m.low ? m.v(a) - m.v(b) : m.v(b) - m.v(a); })[0];
+      var status = bt.length ? '<span class="cb-win">🎉 ' + bt.length + (bt.length === 1 ? ' Spielerin' : ' Spielerinnen') + ' vorne</span>'
+        : '<span class="cb-open">Noch keine vorne</span>';
+      return '<div class="cb-row"><span class="cb-emo" aria-hidden="true">' + m.e + '</span><div class="cb-main"><b>' + m.t + '</b>' +
+        '<div class="cb-vals">🧢 ' + m.f(m.v(c)) + (top ? ' · Beste: ' + nameBtn(top.name) + ' ' + m.f(m.v(top)) : '') + '</div></div>' + status + '</div>';
+    }).join('');
+    return '<div class="cb-head"><div class="cb-emo-big" aria-hidden="true">🧢</div><div><h2>Schlag den Coach</h2>' +
+      '<div class="sub">' + (c.total ? '<b>' + any.length + ' von ' + stats.length + '</b> Mädels liegen schon in mindestens einer der beiden Wertungen vor ' + esc(coachLabel(co.name)) + '.' : esc(coachLabel(co.name)) + ' hat noch nichts eingetragen – leichtes Spiel!') + '</div></div>' +
+      '<button type="button" class="btn small secondary" data-player="' + esc(co.name) + '">Coach-Werte</button></div>' +
+      '<div class="cb-rows">' + rows + '</div>';
+  }).join('');
 }
 
 // ---------- Ranking (alle Werte) ----------
@@ -784,18 +846,36 @@ function rRanking() {
   $('rankTeam').onclick = function (ev) { var b = ev.target.closest('button[data-t]'); if (!b) return; S.rankTeam = b.dataset.t; rRanking(); };
   if (S.rankTeam) stats = stats.filter(function (s) { return teamsOf(s.team).indexOf(S.rankTeam) >= 0; });
   var c = COLS.filter(function (x) { return x.k === S.sort; })[0] || COLS[0];
-  stats.sort(function (a, b) {
+  var cmp = function (a, b) {
     var va = c.v(a), vb = c.v(b);
-    if (c.low) { va = va || Infinity; vb = vb || Infinity; return va - vb || b.total - a.total; }
+    if (c.low) { va = va || Infinity; vb = vb || Infinity; return va - vb || b.total - a.total || dn(a.name).localeCompare(dn(b.name), 'de'); }
     return vb - va || b.total - a.total || dn(a.name).localeCompare(dn(b.name), 'de');
-  });
+  };
+  var hasV = function (s) { return c.low ? !!c.v(s) : c.v(s) > 0; };
+  stats.sort(cmp);
+  // Vergleich mit dem Stand vor 7 Tagen → Auf-/Abstiegspfeile
+  var d7 = new Date(today() + 'T12:00:00Z'); d7.setUTCDate(d7.getUTCDate() - 7); var bis = d7.toISOString().slice(0, 10);
+  var prev = stats.map(function (s) { var p = personStats(s.name, bis); p.team = s.team; return p; }).filter(hasV).sort(cmp);
+  var prevPos = {}; prev.forEach(function (p, i) { prevPos[p.name] = i + 1; });
+  var curPos = {}; stats.filter(hasV).forEach(function (s, i) { curPos[s.name] = i + 1; });
+  var arrow = function (s) {
+    if (c.k === 'week' || !hasV(s)) return '';
+    var pp = prevPos[s.name], pos = curPos[s.name];
+    if (!pp) return '<span class="mv up" title="neu im Ranking">▲ neu</span>';
+    var d = pp - pos;
+    if (d > 0) return '<span class="mv up" title="' + d + ' Plätze gestiegen">▲' + d + '</span>';
+    if (d < 0) return '<span class="mv down" title="' + (-d) + ' Plätze gefallen">▼' + (-d) + '</span>';
+    return '<span class="mv same" title="unverändert">–</span>';
+  };
   var me = store('hd_me'), medals = ['🥇', '🥈', '🥉'];
   $('rankTable').innerHTML = '<thead><tr><th>#</th><th>Name</th>' + COLS.map(function (x) { return '<th class="num sort' + (x.k === c.k ? ' on' : '') + '" data-sort="' + x.k + '">' + x.l + (x.k === c.k ? ' ▾' : '') + '</th>'; }).join('') + '</tr></thead><tbody>' +
     stats.map(function (s, i) {
       var has = c.low ? !!c.v(s) : c.v(s) > 0;
-      return '<tr class="click' + (s.total ? '' : ' zero') + (s.name === me ? ' me' : '') + '" data-player="' + esc(s.name) + '"><td>' + (has && i < 3 ? medals[i] : i + 1) + '</td><td class="nmcell"><b>' + esc(dn(s.name)) + '</b>' + teamPills(s.team) + '</td>' +
+      return '<tr class="click' + (s.total ? '' : ' zero') + (s.name === me ? ' me' : '') + '" data-player="' + esc(s.name) + '"><td>' + (has && i < 3 ? medals[i] : i + 1) + '</td><td class="nmcell"><b>' + esc(dn(s.name)) + '</b>' + teamPills(s.team) + arrow(s) + '</td>' +
         COLS.map(function (x) { return '<td class="num' + (x.k === c.k ? ' sorted' : '') + '">' + x.f(x.v(s)) + '</td>'; }).join('') + '</tr>';
-    }).join('') + '</tbody>';
+    }).join('') + coaches().map(function (co) { var s = personStats(co.name);
+      return '<tr class="click coachrow" data-player="' + esc(co.name) + '"><td>🧢</td><td class="nmcell"><b>' + esc(coachLabel(co.name)) + '</b> <span class="pill">außer Konkurrenz</span></td>' +
+        COLS.map(function (x) { return '<td class="num">' + x.f(x.v(s)) + '</td>'; }).join('') + '</tr>'; }).join('') + '</tbody>';
   $('rankTable').querySelector('thead').onclick = function (ev) { var th = ev.target.closest('th[data-sort]'); if (!th) return; ev.stopPropagation(); S.sort = th.dataset.sort; rRanking(); };
 }
 
@@ -807,10 +887,15 @@ function openPlayer(name) {
   var r = S.roster.filter(function (x) { return x.name === name; })[0];
   var sorted = stats.slice().sort(function (a, b) { return b.total - a.total; });
   var pos = sorted.findIndex(function (x) { return x.name === name; }) + 1;
-  $('pTitle').textContent = dn(name);
-  $('pSub').innerHTML = (r ? teamPills(r.team) + ' ' : '') + (s.total ? 'Platz ' + pos + ' von ' + stats.length + ' nach Einheiten' : 'Noch keine Einheiten eingetragen');
+  var coach = isCoachName(name);
+  $('pTitle').textContent = coach ? '🧢 ' + coachLabel(name) : dn(name);
+  $('pSub').innerHTML = coach ? 'Außer Konkurrenz – das ist die Messlatte für „Schlag den Coach“' : (r ? teamPills(r.team) + ' ' : '') + (s.total ? 'Platz ' + pos + ' von ' + stats.length + ' nach Einheiten' : 'Noch keine Einheiten eingetragen');
   var medals = ['🥇', '🥈', '🥉'], badges = [];
   AWARDS.forEach(function (a) { awardTop(a, stats).forEach(function (x) { if (x.n === name) badges.push('<span class="badge r' + x.r + '">' + medals[x.r - 1] + ' ' + a.e + ' ' + a.t + '</span>'); }); });
+  if (!coach) coaches().forEach(function (co) {
+    var cs = personStats(co.name);
+    COACH_METRICS.forEach(function (m) { if (beats(m, s, cs)) badges.push('<span class="badge beat">🧢 ' + m.t + ': vor ' + esc(coachLabel(co.name)) + '</span>'); });
+  });
   $('pBadges').innerHTML = badges.join('');
   $('pKpis').innerHTML = [[s.total, 'Einheiten'], [km1(s.km), 'Lauf-km'], [s.best ? mmss(s.best) : '–', 'Best-Pace (5 km norm.)'], [s.longest ? de(s.longest.distanz_km) + ' km' : '–', 'Längster Lauf'],
     [km1(s.rad), 'Rad-km'], [s.akt.Athletiktraining, 'Athletik'], [s.nweeks, 'aktive Wochen'], [s.thisWeek, 'diese Woche']]
@@ -852,20 +937,20 @@ function rTrainer() {
   rTeamEditor();
   $('plTeams').innerHTML = TEAMS.map(function (t) { return '<button type="button" aria-pressed="' + !!S.newTeams[t] + '" data-t="' + t + '">' + t + '</button>'; }).join('');
   $('plTeams').onclick = function (ev) { var b = ev.target.closest('button[data-t]'); if (!b) return; S.newTeams[b.dataset.t] = !S.newTeams[b.dataset.t]; b.setAttribute('aria-pressed', String(!!S.newTeams[b.dataset.t])); };
-  $('plCount').textContent = 'Kader aktuell: ' + S.roster.length + ' Spielerinnen.';
+  $('plCount').textContent = 'Kader aktuell: ' + (S.roster.length - coaches().length) + ' Spielerinnen' + (coaches().length ? ' + Coach' : '') + '.';
   rTrainerStats();
   rTrainerList();
 }
 function rTeamEditor() {
   var list = S.roster.slice().sort(function (a, b) { return dn(a.name).localeCompare(dn(b.name), 'de'); });
   $('teamEditor').innerHTML = list.map(function (r) {
-    var cur = S.teamDraft[r.name] != null ? teamsOf(S.teamDraft[r.name]) : teamsOf(r.team);
-    var changed = S.teamDraft[r.name] != null && S.teamDraft[r.name] !== teamStr(teamsOf(r.team));
+    var cur = S.teamDraft[r.name] != null ? tokensOf(S.teamDraft[r.name]) : tokensOf(r.team);
+    var changed = S.teamDraft[r.name] != null && S.teamDraft[r.name] !== teamStr(tokensOf(r.team));
     return '<div class="trow' + (changed ? ' changed' : '') + '"><b>' + esc(dn(r.name)) + '</b><div class="seg small" data-name="' + esc(r.name) + '">' +
-      TEAMS.map(function (t) { return '<button type="button" aria-pressed="' + (cur.indexOf(t) >= 0) + '" data-t="' + t + '">' + t + '</button>'; }).join('') +
+      TEAMS.concat(['Coach']).map(function (t) { return '<button type="button" aria-pressed="' + (cur.indexOf(t) >= 0) + '" data-t="' + t + '">' + (t === 'Coach' ? '🧢 Coach' : t) + '</button>'; }).join('') +
       '</div><button type="button" class="del" data-remove="' + esc(r.name) + '">Entfernen</button></div>';
   }).join('');
-  var n = Object.keys(S.teamDraft).filter(function (k) { var r = S.roster.filter(function (x) { return x.name === k; })[0]; return r && S.teamDraft[k] !== teamStr(teamsOf(r.team)); }).length;
+  var n = Object.keys(S.teamDraft).filter(function (k) { var r = S.roster.filter(function (x) { return x.name === k; })[0]; return r && S.teamDraft[k] !== teamStr(tokensOf(r.team)); }).length;
   $('teamSave').textContent = n ? 'Teams speichern (' + n + ' Änderung' + (n > 1 ? 'en' : '') + ')' : 'Teams speichern';
   $('teamSave').disabled = !n;
   $('teamEditor').onclick = function (ev) {
@@ -883,7 +968,7 @@ function rTeamEditor() {
     }
     var b = ev.target.closest('button[data-t]'); if (!b) return;
     var seg = b.parentNode, name = seg.dataset.name, r = S.roster.filter(function (x) { return x.name === name; })[0];
-    var cur = S.teamDraft[name] != null ? teamsOf(S.teamDraft[name]) : teamsOf(r.team), t = b.dataset.t;
+    var cur = S.teamDraft[name] != null ? tokensOf(S.teamDraft[name]) : tokensOf(r.team), t = b.dataset.t;
     cur = cur.indexOf(t) >= 0 ? cur.filter(function (x) { return x !== t; }) : cur.concat([t]);
     S.teamDraft[name] = teamStr(cur); rTeamEditor();
   };
