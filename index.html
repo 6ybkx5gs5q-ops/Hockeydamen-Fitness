@@ -106,6 +106,30 @@ button.linkname { all: unset; cursor: pointer; font-weight: inherit; }
 button.linkname:hover { text-decoration: underline; }
 button.linkname:focus-visible { outline: 2px solid var(--accent); border-radius: 4px; }
 
+/* Virtuelle Strecke */
+.trip { background: var(--card); border: 1px solid var(--line); border-radius: 18px; padding: 16px; display: grid; gap: 12px; }
+.tr-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; }
+.tr-head h2 { margin: 0; font-size: 19px; }
+.tr-head .sub { color: var(--muted); font-size: 13px; }
+.tr-km { text-align: right; flex: none; }
+.tr-km b { display: block; font-size: 26px; font-weight: 800; color: var(--accent); line-height: 1; font-variant-numeric: tabular-nums; }
+.tr-km span { font-size: 12px; color: var(--muted); }
+.tr-line { position: relative; height: 14px; background: var(--h0); border-radius: 999px; margin: 34px 12px 30px; }
+.tr-city { position: absolute; top: -30px; transform: translateX(-50%); font-size: 17px; line-height: 1; filter: grayscale(.6); opacity: .65; }
+.tr-city.ok { filter: none; opacity: 1; }
+.tr-fill { position: absolute; left: 0; top: 0; bottom: 0; background: linear-gradient(90deg, #2563eb, #0d9488); border-radius: 999px; }
+.tr-mark { position: absolute; top: 50%; width: 12px; height: 12px; margin: -6px 0 0 -6px; border-radius: 50%; background: var(--card); border: 3px solid var(--line); }
+.tr-mark.ok { border-color: #0d9488; }
+.tr-mark.rec { width: 16px; height: 16px; margin: -8px 0 0 -8px; border-color: var(--gold); background: var(--gold-soft); }
+.tr-runner { position: absolute; top: 14px; transform: translateX(-50%) scaleX(-1); font-size: 22px; line-height: 1; }
+.tr-text { font-size: 15px; }
+.tr-chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.tr-chip { font-size: 12px; padding: 4px 9px; border-radius: 999px; border: 1px solid var(--line); background: var(--bg); color: var(--muted); }
+.tr-chip small { opacity: .75; }
+.tr-chip.ok { color: var(--ok); background: var(--ok-soft); border-color: transparent; }
+.tr-chip.next { color: var(--accent); border-color: var(--accent); font-weight: 700; }
+.tr-chip.rec { border-color: var(--gold); }
+
 /* Schlag den Coach */
 .coachbox { background: var(--card); border: 2px dashed var(--gold); border-radius: 18px; padding: 16px; display: grid; gap: 12px; }
 .cb-head { display: flex; gap: 12px; align-items: center; }
@@ -296,6 +320,7 @@ footer button { background: none; border: 0; color: var(--accent); cursor: point
   <!-- ÜBERSICHT -->
   <section class="view" id="v-uebersicht" hidden>
     <div class="team-all" id="teamAll"></div>
+    <div class="trip" id="trip"></div>
     <div id="teamInfo"></div>
     <div class="teams" id="teamCards"></div>
 
@@ -322,6 +347,11 @@ footer button { background: none; border: 0; color: var(--accent); cursor: point
       <p class="sub">Auf eine Spalte tippen zum Sortieren, auf einen Namen für das persönliche Dashboard. ▲▼ = Plätze gewonnen/verloren gegenüber vor 7 Tagen.</p>
       <div class="seg small" id="rankTeam" style="margin:0 0 12px"></div>
       <div class="scroll"><table id="rankTable"></table></div>
+    </div>
+    <div class="card">
+      <h2>🏁 Kilometer-Rennen</h2>
+      <p class="sub">Gelaufene km (Ausdauer + Intervalle) aufsummiert – die Top 5<span id="raceMe"></span>. Gestrichelt: der Coach.</p>
+      <div class="chart tall"><canvas id="cRace"></canvas></div>
     </div>
   </section>
 
@@ -777,6 +807,7 @@ function rUebersicht() {
   $('awards').innerHTML = cards || '<div class="info">🏁 Sobald die ersten Einheiten eingetragen sind, werden hier die Auszeichnungen vergeben.</div>';
   $('awardsSub').textContent = 'Tippen für Details';
   rCoach(stats);
+  rTrip(stats);
 
   // Wochenverlauf (letzte 10 Wochen)
   var W = S.entries.length ? weeksRange(S.entries[0].datum, today()).slice(-10) : weeksRange(today(), today());
@@ -877,6 +908,73 @@ function rRanking() {
       return '<tr class="click coachrow" data-player="' + esc(co.name) + '"><td>🧢</td><td class="nmcell"><b>' + esc(coachLabel(co.name)) + '</b> <span class="pill">außer Konkurrenz</span></td>' +
         COLS.map(function (x) { return '<td class="num">' + x.f(x.v(s)) + '</td>'; }).join('') + '</tr>'; }).join('') + '</tbody>';
   $('rankTable').querySelector('thead').onclick = function (ev) { var th = ev.target.closest('th[data-sort]'); if (!th) return; ev.stopPropagation(); S.sort = th.dataset.sort; rRanking(); };
+  rRace(stats);
+}
+
+// Kilometer-Rennen: kumulierte Lauf-km der Top 5 (+ eigene Linie, + Coach gestrichelt)
+function rRace(stats) {
+  if (S.charts.cRace) { S.charts.cRace.destroy(); delete S.charts.cRace; }
+  if (!window.Chart) return;
+  var me = store('hd_me');
+  var pick = stats.filter(function (s) { return s.km > 0; }).sort(function (a, b) { return b.km - a.km; }).slice(0, 5);
+  var meS = stats.filter(function (s) { return s.name === me && s.km > 0; })[0];
+  var meIn = pick.some(function (s) { return s.name === me; });
+  if (meS && !meIn) pick.push(meS);
+  $('raceMe').textContent = meS ? (meIn ? ' (du bist dabei, dicke Linie)' : ' plus deine Linie (dick)') : '';
+  var series = pick.map(function (s) { return { name: s.name, label: dn(s.name), me: s.name === me, coach: false }; });
+  coaches().forEach(function (co) { if (personStats(co.name).km > 0) series.push({ name: co.name, label: coachLabel(co.name), me: false, coach: true }); });
+  var pal = ['#2563eb', '#ef4444', '#10b981', '#f59e0b', '#8b5cf6', '#0d9488'];
+  var t0 = null;
+  var ds = series.map(function (x, i) {
+    var es = S.entries.filter(function (e) { return e.name === x.name && isRunlike(e) && e.distanz_km; });
+    var sum = 0, pts = [], byDay = {};
+    es.forEach(function (e) { byDay[e.datum] = (byDay[e.datum] || 0) + e.distanz_km; });
+    var days = Object.keys(byDay).sort();
+    if (days.length) { var st = new Date(days[0] + 'T12:00:00').getTime() - 86400000; pts.push({ x: st, y: 0 }); if (t0 === null || st < t0) t0 = st; }
+    days.forEach(function (d) { sum += byDay[d]; pts.push({ x: new Date(d + 'T12:00:00').getTime(), y: Math.round(sum * 10) / 10 }); });
+    if (pts.length) pts.push({ x: new Date(today() + 'T12:00:00').getTime(), y: Math.round(sum * 10) / 10 });
+    var c = x.coach ? css('--muted') : pal[i % pal.length];
+    return { label: x.label, data: pts, stepped: true, borderColor: c, backgroundColor: c, borderWidth: x.me ? 4.5 : 2.2, borderDash: x.coach ? [6, 5] : [], pointRadius: 0, pointHoverRadius: 4 };
+  });
+  S.charts.cRace = new Chart($('cRace'), { type: 'line', data: { datasets: ds },
+    options: { responsive: true, maintainAspectRatio: false, interaction: { mode: 'nearest', intersect: false },
+      plugins: { legend: { display: true, position: 'bottom' }, tooltip: { callbacks: { title: function (it) { return new Date(it[0].parsed.x).toLocaleDateString('de-DE'); }, label: function (it) { return it.dataset.label + ': ' + km1(it.parsed.y) + ' km'; } } } },
+      scales: { x: { type: 'linear', ticks: { maxTicksLimit: 7, callback: function (v) { var d = new Date(v); return d.getDate() + '.' + (d.getMonth() + 1) + '.'; } } }, y: { beginAtZero: true, title: { display: true, text: 'km' } } } } });
+}
+
+// Virtuelle Strecke (Team-Kilometerziel). Distanzen ca. Straßen-km ab Dortmund.
+var ROUTE = [
+  { n: 'Dortmund', km: 0, e: '🏠' }, { n: 'Düsseldorf', km: 70, e: '🍺' }, { n: 'Köln', km: 110, e: '⛪' }, { n: 'Aachen', km: 180, e: '🍪' },
+  { n: 'Lüttich', km: 235, e: '🧇' }, { n: 'Brüssel', km: 330, e: '🍫' }, { n: 'Lille', km: 440, e: '🏰' },
+  { n: 'Rekord Runde 1', km: 542, e: '🏁', rec: true },
+  { n: 'Paris', km: 665, e: '🗼' }, { n: 'Lyon', km: 1130, e: '🦁' }, { n: 'Montpellier', km: 1430, e: '☀️' }, { n: 'Barcelona', km: 1770, e: '🏖️' }
+];
+var LEGS = [{ t: 'Etappe 1: Dortmund → Paris', a: 0, b: 665 }, { t: 'Etappe 2: Paris → Barcelona', a: 665, b: 1770 }];
+function teamKm() { return S.entries.reduce(function (sum, e) { return sum + (isRunlike(e) && !isCoachName(e.name) ? (e.distanz_km || 0) : 0); }, 0); }
+function rTrip() {
+  var km = teamKm();
+  var leg = LEGS.filter(function (l) { return km < l.b; })[0] || LEGS[LEGS.length - 1];
+  var done = km >= LEGS[LEGS.length - 1].b;
+  var stops = ROUTE.filter(function (s) { return s.km >= leg.a && s.km <= leg.b; });
+  var span = leg.b - leg.a, pct = Math.max(0, Math.min(100, (km - leg.a) / span * 100));
+  var next = ROUTE.filter(function (s) { return s.km > km; })[0];
+  var last = ROUTE.filter(function (s) { return s.km <= km; }).pop();
+  var head = done ? '🎉 Barcelona erreicht! ' + km1(km) + ' km gemeinsam gelaufen.'
+    : (km === 0 ? 'Start in Dortmund – jeder gelaufene Kilometer bringt uns weiter.'
+      : 'Wir sind hinter ' + last.n + ' – noch <b>' + km1(next.km - km) + ' km</b> bis ' + (next.rec ? 'zum Rekord aus Runde 1 🏁' : next.n + (next.e ? ' ' + next.e : '')) + '.');
+  var marks = stops.map(function (s) {
+    var l = (s.km - leg.a) / span * 100, reached = km >= s.km;
+    return '<span class="tr-city' + (reached ? ' ok' : '') + '" style="left:' + l + '%" title="' + esc(s.n) + ' (' + s.km + ' km)" aria-hidden="true">' + s.e + '</span>' +
+      '<span class="tr-mark' + (s.rec ? ' rec' : '') + (reached ? ' ok' : '') + '" style="left:' + l + '%" title="' + esc(s.n) + ' (' + s.km + ' km)"></span>';
+  }).join('');
+  var chips = stops.map(function (s) {
+    var reached = km >= s.km, isNext = next && s.km === next.km;
+    return '<span class="tr-chip' + (reached ? ' ok' : '') + (isNext ? ' next' : '') + (s.rec ? ' rec' : '') + '">' + (reached ? '✓ ' : '') + (s.e ? s.e + ' ' : '') + esc(s.n) + ' <small>' + s.km + ' km</small></span>';
+  }).join('');
+  $('trip').innerHTML = '<div class="tr-head"><div><h2>🗺️ Unsere Reise</h2><div class="sub">' + leg.t + ' · zählt: Laufen + Intervalle aller Mädels</div></div>' +
+    '<div class="tr-km"><b>' + km1(km) + '</b><span>km gemeinsam</span></div></div>' +
+    '<div class="tr-line"><div class="tr-fill" style="width:' + pct + '%"></div>' + marks + '<span class="tr-runner" style="left:' + pct + '%" aria-hidden="true">🏃‍♀️</span></div>' +
+    '<div class="tr-text">' + head + '</div><div class="tr-chips">' + chips + '</div>';
 }
 
 // ---------- Persönliches Dashboard ----------
@@ -896,6 +994,7 @@ function openPlayer(name) {
     var cs = personStats(co.name);
     COACH_METRICS.forEach(function (m) { if (beats(m, s, cs)) badges.push('<span class="badge beat">🧢 ' + m.t + ': vor ' + esc(coachLabel(co.name)) + '</span>'); });
   });
+  if (!coach && s.km > 0) { var tk = teamKm(); badges.push('<span class="badge beat">🗺️ ' + km1(s.km) + ' km zur Reise beigetragen' + (tk ? ' (' + Math.round(100 * s.km / tk) + ' %)' : '') + '</span>'); }
   $('pBadges').innerHTML = badges.join('');
   $('pKpis').innerHTML = [[s.total, 'Einheiten'], [km1(s.km), 'Lauf-km'], [s.best ? mmss(s.best) : '–', 'Best-Pace (5 km norm.)'], [s.longest ? de(s.longest.distanz_km) + ' km' : '–', 'Längster Lauf'],
     [km1(s.rad), 'Rad-km'], [s.akt.Athletiktraining, 'Athletik'], [s.nweeks, 'aktive Wochen'], [s.thisWeek, 'diese Woche']]
